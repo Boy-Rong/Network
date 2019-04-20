@@ -67,6 +67,15 @@ public extension RHCache {
     
 }
 
+public extension RHCache {
+    
+    /// 查询所有失败的请求
+    func queryFailureRequests(_ completion : @escaping (Result<[String]>) -> Void) {
+        object([String].self, for: NetworkCacheType.cacheRequestKey, completion: completion)
+    }
+    
+}
+
 
 extension TransformerFactory {
     

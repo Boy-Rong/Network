@@ -38,16 +38,18 @@ public extension Reactive where Base: MoyaProviderType {
         
         return Observable.create({ [weak base] observer in
             
-            // 先判断是否有网，没有可用网络直接发送完成
-            if !NetworkReachabilityService.shared.isHasNetwork {
-                observer.onError(NetworkError.error(value: "网络不可用"))
-                errorHandle()
-            }
-            
             // 先取缓存
             if token.cache == .cacheResponse,
                 let response = try? RHCache.shared.response(for: token) {
                 observer.onNext(response)
+            }
+            
+            // 如果 没有可用网络 并且 不缓存策略 的情况下 直接发送错误并结束，不发会送请求
+            if !NetworkReachabilityService.shared.isHasNetwork && token.cache != .cacheResponse {
+                observer.onError(NetworkError.error(value: "网络不可用"))
+                errorHandle()
+                
+                return Disposables.create()
             }
             
             // 发请求

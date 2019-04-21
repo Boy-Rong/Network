@@ -11,8 +11,13 @@ import RxSwift
 
 
 // MARK: - 类型定义
+/// Moya
 public typealias TargetType = Moya.TargetType
 public typealias Response = Moya.Response
+public typealias Task = Moya.Task
+public typealias Method = Moya.Method
+public typealias MoyaProvider = Moya.MoyaProvider
+
 /// 网路结果类型
 public typealias NetworkResult<T> = Swift.Result<T,NetworkError>
 /// 网路结果序列

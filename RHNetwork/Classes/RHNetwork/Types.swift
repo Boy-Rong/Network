@@ -18,6 +18,12 @@ public typealias Task = Moya.Task
 public typealias Method = Moya.Method
 public typealias MoyaProvider = Moya.MoyaProvider
 
+public typealias ParameterEncoding = Alamofire.ParameterEncoding
+public typealias JSONEncoding = Alamofire.JSONEncoding
+public typealias URLEncoding = Alamofire.URLEncoding
+public typealias PropertyListEncoding = Alamofire.PropertyListEncoding
+public typealias RequestMultipartFormData = Alamofire.MultipartFormData
+
 /// 网路结果类型
 public typealias NetworkResult<T> = Swift.Result<T,NetworkError>
 /// 网路结果序列

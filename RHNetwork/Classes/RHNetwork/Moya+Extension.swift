@@ -11,6 +11,9 @@ import RxSwift
 import Moya
 import RHCache
 
+// MARK: - 让Provider 有Rx属性
+extension MoyaProvider: ReactiveCompatible {}
+
 // MARK: - Moya RxSwift网络请求方法扩展
 public extension Reactive where Base: MoyaProviderType {
     

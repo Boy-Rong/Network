@@ -8,26 +8,24 @@
 
 import Foundation 
 import RxSwift
-import RxCocoa
-import RxSwiftExtensions
 
 /// 通用网络请求方法
 public func network<S,O,T>(start : S, request : @escaping (S.E) throws -> O)
-    -> (isLoading : Observable<Bool>,
-        result : Observable<T>,
+    -> (result : Observable<T>,
+        isLoading : Observable<Bool>,
         error : Observable<NetworkError>)
     where S : ObservableType, O : ObservableType, O.E == Result<T,Error> {
         
-        let isLoading = BehaviorRelay<Bool?>(value: nil)
-        let error = BehaviorRelay<NetworkError?>(value: nil)
+        let isLoading = PublishSubject<Bool>()
+        let error = PublishSubject<NetworkError>()
         let result = start
-            .do(onNext: { _ in isLoading.accept(true) })
+            .do(onNext: { _ in isLoading.onNext(true) })
             .flatMapLatest(request)
-            .do(onNext: { _ in isLoading.accept(false) })
-            .mapSuccess { error.accept($0 as? NetworkError) }
+            .do(onNext: { _ in isLoading.onNext(false) })
+            .mapSuccess { error.onNext($0 as! NetworkError) }
             .shareOnce()
         
-        return (isLoading.asObservable().filterNil(), result, error.asObservable().filterNil())
+        return (result,isLoading.asObservable(), error.asObservable())
 }
 
 /// 通用网络请求方法
@@ -45,19 +43,19 @@ public func network<S,P,O,T>(start : S, params : P, request : @escaping (P.E) th
     where S : ObservableType,
     O : ObservableType, O.E == Result<T,Error>, P : ObservableConvertibleType {
         
-        let isLoading = BehaviorRelay<Bool?>(value: nil)
-        let error = BehaviorRelay<NetworkError?>(value: nil)
+        let isLoading = PublishSubject<Bool>()
+        let error = PublishSubject<NetworkError>()
         let result = start
-            .do(onNext: { _ in isLoading.accept(true) })
+            .do(onNext: { _ in isLoading.onNext(true) })
             .withLatestFrom(params)
             .flatMapLatest(request)
-            .do(onNext: { _ in isLoading.accept(false) })
-            .mapSuccess { error.accept($0 as? NetworkError) }
+            .do(onNext: { _ in isLoading.onNext(false) })
+            .mapSuccess { error.onNext(mapNetworkError(form: $0)) }
             .shareOnce()
         
         return (result,
-                isLoading.asObservable().filterNil(),
-                error.asObservable().filterNil())
+                isLoading.asObservable(),
+                error.asObservable())
 }
 
 
@@ -76,37 +74,37 @@ public func pageNetwork<S,N,P,O,L,T>(
     -> (values : Observable<[T]>,
         loadState : Observable<PageLoadState>,
         error : Observable<NetworkError>,
-        page : Observable<Int>,
         isMore : Observable<Bool>,
         disposables : [Disposable])
 where S : ObservableType, N : ObservableType, P : ObservableConvertibleType,
     O : ObservableType, O.E == Result<L,Error>, L : PageList, L.E == T {
         
-        let loadState = BehaviorRelay<PageLoadState?>(value: nil)
-        let error = BehaviorRelay<NetworkError?>(value: nil)
-        let page = BehaviorRelay<Int>(value: 1)
-        let total = BehaviorRelay<Int>(value: 0)
-        let isHasMore = BehaviorRelay<Bool>(value: false)
-        let values = BehaviorRelay<[T]>(value: [])
+        var page = 1
+        let loadState = PublishSubject<PageLoadState>()
+        let error = PublishSubject<NetworkError>()
+        let total = PublishSubject<Int>()
+        /// 默认没有加载更多
+        let isHasMore = BehaviorSubject<Bool>(value: false)
+        let values = PublishSubject<[T]>()
         
-        let fristResult = frist.do(onNext: { _ in loadState.accept(.startRefresh) })
+        let fristResult = frist.do(onNext: { _ in loadState.onNext(.startRefresh) })
             .withLatestFrom(params).map { ($0, 1) }
             .flatMapLatest(request)
-            .mapSuccess { error.accept($0 as? NetworkError) }
-            .do(onNext: { value in
-                page.accept(1)
-                loadState.accept(.endRefresh)
+            .mapSuccess { error.onNext(mapNetworkError(form: $0)) }
+            .do(onNext: { _ in
+                page += 1
+                loadState.onNext(.endRefresh)
             })
             .shareOnce()
         
         let nextResult = next.pausable(isHasMore)
-            .do(onNext: { _ in loadState.accept(.startLoadMore) })
-            .withLatestFrom(params).map { ($0, page.value + 1) }
+            .do(onNext: { _ in loadState.onNext(.startLoadMore) })
+            .withLatestFrom(params).map { ($0, page + 1) }
             .flatMapLatest(request)
-            .mapSuccess { error.accept($0 as? NetworkError) }
+            .mapSuccess { error.onNext(mapNetworkError(form: $0)) }
             .do(onNext: { _ in
-                page.accept(page.value + 1)
-                loadState.accept(.endLoadMore)
+                page += 1
+                loadState.onNext(.endLoadMore)
             })
             .shareOnce()
         
@@ -126,9 +124,13 @@ where S : ObservableType, N : ObservableType, P : ObservableConvertibleType,
             .bind(to: values)
         
         return (values.asObservable(),
-                loadState.asObservable().filterNil(),
-                error.asObservable().filterNil(),
-                page.asObservable(),
+                loadState.asObservable(),
+                error.asObservable(),
                 isHasMore.asObservable(),
                 [disposable1,disposable2,disposable3])
+}
+
+
+fileprivate func mapNetworkError(form error : Error) -> NetworkError {
+    return (error as? NetworkError) ?? .error(value: "转换 NetworkError 失败")
 }

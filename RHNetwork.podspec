@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'RHNetwork'
-  s.version          = '0.1.1'
+  s.version          = '0.1.2'
   s.summary          = 'Moya封装'
 
   s.description      = <<-DESC
@@ -36,8 +36,6 @@ Moya网路请求封装, 可选缓存，RxSwift支持
   s.dependency 'Alamofire', '~>4.8.2'
   s.dependency 'Moya', '~>13.0'
   s.dependency 'RxSwift', '~>4.5'
-  s.dependency 'RxCocoa'
-  s.dependency 'RxSwiftExtensions.swift', '~>0.1'
   s.dependency 'RHCache', '~>0.1'
   
 end

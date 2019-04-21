@@ -19,7 +19,7 @@ public extension Reactive where Base: MoyaProviderType {
     
     /// Moya请求Response方法
     /// - Parameter token: 带有缓存机制，取决于 TargetType.cache，取缓存时用RHCache取 NetworkCacheType.cacheRequestKey 字段下的数据，结果为 [String]，再将结果转换为[TargetType]，然后从新发请求
-    func requestResponse<T : TargetType>(_ token: T) -> Observable<Response> {
+    func requestResponse(_ token: Base.Target) -> Observable<Response> {
         
         /// 请求错误的处理
         let errorHandle = {
@@ -56,7 +56,7 @@ public extension Reactive where Base: MoyaProviderType {
             }
             
             // 发请求
-            let cancellableToken = base?.request(token as! Base.Target, callbackQueue: nil, progress: nil) { result in
+            let cancellableToken = base?.request(token, callbackQueue: nil, progress: nil) { result in
                 switch result {
                 case let .success(response):
                     observer.onNext(response)
@@ -81,20 +81,20 @@ public extension Reactive where Base: MoyaProviderType {
     }
     
     /// Moya请求Result方法 -> Observable<Result<R,NetworkError>>
-    func requestResult<T : TargetType, R : Codable>(
-        _ token: T,
+    func requestResult<T : Codable>(
+        _ token: Base.Target,
         dataKey : String = NetworkKey.data,
         codeKey : String = NetworkKey.code,
         messageKey : String = NetworkKey.message,
-        successCode : Int = NetworkKey.success) -> NetworkObservable<R> {
+        successCode : Int = NetworkKey.success) -> NetworkObservable<T> {
         return requestResponse(token)
             .mapResult(dataKey: dataKey, codeKey: codeKey,
                        messageKey: messageKey, successCode: successCode)
     }
     
     /// Moya请求Success方法 -> Observable<Result<Void,NetworkError>>
-    func requestSuccess<T : TargetType>(
-        _ token: T,
+    func requestSuccess(
+        _ token: Base.Target,
         codeKey : String = NetworkKey.code,
         messageKey : String = NetworkKey.message,
         successCode : Int = NetworkKey.success) -> NetworkObservable<Void> {

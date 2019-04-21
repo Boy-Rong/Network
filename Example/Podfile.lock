@@ -7,7 +7,7 @@ PODS:
     - Result (~> 4.1)
   - Result (4.1.0)
   - RHCache (0.1.5)
-  - RHNetwork (0.1.2):
+  - RHNetwork (0.1.3):
     - Alamofire (~> 4.8.2)
     - Moya (~> 13.0)
     - RHCache (~> 0.1)
@@ -34,7 +34,7 @@ SPEC CHECKSUMS:
   Moya: 161263550064ff8a4948e8ff63137fd72a876292
   Result: bd966fac789cc6c1563440b348ab2598cc24d5c7
   RHCache: 84cca0c6637c27039219808afb2d58be8c6196b3
-  RHNetwork: e5f1a0b5f2c277a7985b2deb524c623991f538a7
+  RHNetwork: 1d7e8b905513eb04b3b29310b5b670a8add4b6ce
   RxSwift: f172070dfd1a93d70a9ab97a5a01166206e1c575
 
 PODFILE CHECKSUM: 6d238ee9ff077ba8ca268461f86e6f0d1538f266

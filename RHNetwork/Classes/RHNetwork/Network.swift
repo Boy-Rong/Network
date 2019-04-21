@@ -112,16 +112,16 @@ where S : ObservableType, N : ObservableType, P : ObservableConvertibleType,
             total.asObservable(),
             values.map({ $0.count }).asObservable())
             .map { $0 - $1 > 0 }
-            .bind(to: isHasMore)
+            .subscribe(onNext: { isHasMore.onNext($0) })
         
         let disposable2 = Observable.merge(fristResult.map({ $0.total }),
                                            nextResult.map({ $0.total }))
-            .bind(to: total)
+            .subscribe(onNext: { total.onNext($0) })
         
         let disposable3 = Observable.merge(
             fristResult.map({ $0.items }),
             nextResult.map({ $0.items }).withLatestFrom(values){ $1 + $0 })
-            .bind(to: values)
+            .subscribe(onNext: { values.onNext($0) })
         
         return (values.asObservable(),
                 loadState.asObservable(),

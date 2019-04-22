@@ -17,12 +17,12 @@ public typealias Response = Moya.Response
 public typealias Task = Moya.Task
 public typealias Method = Moya.Method
 public typealias MoyaProvider = Moya.MoyaProvider
+public typealias MultipartFormData = Moya.MultipartFormData
 
 public typealias ParameterEncoding = Alamofire.ParameterEncoding
 public typealias JSONEncoding = Alamofire.JSONEncoding
 public typealias URLEncoding = Alamofire.URLEncoding
 public typealias PropertyListEncoding = Alamofire.PropertyListEncoding
-public typealias RequestMultipartFormData = Alamofire.MultipartFormData
 
 /// 网路结果类型
 public typealias NetworkResult<T> = Swift.Result<T,NetworkError>
@@ -74,7 +74,7 @@ public enum PageLoadState : String {
     /// 结束上拉加载
     case endLoadMore
     
-    var isLoading : Bool {
+    public var isLoading : Bool {
         switch self {
         case .startRefresh, .startLoadMore:
             return true

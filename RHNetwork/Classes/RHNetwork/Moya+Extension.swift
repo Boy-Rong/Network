@@ -108,6 +108,18 @@ public extension Reactive where Base: MoyaProviderType {
 // MARK: - 对 Response 序列扩展，转成Result<T,Error>
 extension ObservableType where E == Response {
     
+    public func mapJSON(failsOnEmptyData: Bool = true) -> Observable<Any> {
+        return flatMap { Observable.just(try $0.mapJSON(failsOnEmptyData: failsOnEmptyData)) }
+    }
+    
+    public func mapString(atKeyPath keyPath: String? = nil) -> Observable<String> {
+        return flatMap { Observable.just(try $0.mapString(atKeyPath: keyPath)) }
+    }
+    
+    public func map<D: Decodable>(_ type: D.Type, atKeyPath keyPath: String? = nil, using decoder: JSONDecoder = JSONDecoder(), failsOnEmptyData: Bool = true) -> Observable<D> {
+        return flatMap { Observable.just(try $0.map(type, atKeyPath: keyPath, using: decoder, failsOnEmptyData: failsOnEmptyData)) }
+    }
+    
     /// 将内容 map成 Result<T,NetworkError>
     fileprivate func mapResult<T : Codable>(dataKey : String, codeKey : String,
                                 messageKey : String, successCode : Int)

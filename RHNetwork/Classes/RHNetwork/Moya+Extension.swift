@@ -109,7 +109,7 @@ public extension Reactive where Base: MoyaProviderType {
 extension ObservableType where E == Response {
     
     /// 将内容 map成 Result<T,NetworkError>
-    func mapResult<T : Codable>(dataKey : String, codeKey : String,
+    fileprivate func mapResult<T : Codable>(dataKey : String, codeKey : String,
                                 messageKey : String, successCode : Int)
         -> NetworkObservable<T> {
             return debugNetwork()
@@ -133,7 +133,7 @@ extension ObservableType where E == Response {
     }
     
     /// 将内容 map成 Result<Void,NetworkError>
-    func mapSuccess(codeKey : String, messageKey : String, successCode : Int)
+    fileprivate func mapSuccess(codeKey : String, messageKey : String, successCode : Int)
         -> NetworkVoidObservable {
             return debugNetwork()
                 .flatMap({ response -> NetworkVoidObservable in

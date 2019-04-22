@@ -30,7 +30,7 @@ extension ObservableType {
 extension ObservableType {
     
     /// map 成功后的值（过滤失败），并处理 Failure事件
-    func mapSuccess<T>(failure : ((Error) -> Void)? = nil) -> Observable<T> where Self.E == Swift.Result<T,Error> {
+    func mapSuccess<T>(failure : ((Error) -> Void)? = nil) -> Observable<T> where Self.E == Swift.Result<T,NetworkError> {
         return `do`(onNext: { result in
             switch result {
             case .success: break

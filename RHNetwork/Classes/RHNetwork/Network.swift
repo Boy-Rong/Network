@@ -14,7 +14,7 @@ public func network<S,O,T>(start : S, request : @escaping (S.E) throws -> O)
     -> (result : Observable<T>,
         isLoading : Observable<Bool>,
         error : Observable<NetworkError>)
-    where S : ObservableType, O : ObservableType, O.E == Result<T,Error> {
+    where S : ObservableType, O : ObservableType, O.E == Result<T,NetworkError> {
         
         let isLoading = PublishSubject<Bool>()
         let error = PublishSubject<NetworkError>()
@@ -22,7 +22,7 @@ public func network<S,O,T>(start : S, request : @escaping (S.E) throws -> O)
             .do(onNext: { _ in isLoading.onNext(true) })
             .flatMapLatest(request)
             .do(onNext: { _ in isLoading.onNext(false) })
-            .mapSuccess { error.onNext($0 as! NetworkError) }
+            .mapSuccess { error.onNext(transformError(form: $0)) }
             .shareOnce()
         
         return (result,isLoading.asObservable(), error.asObservable())
@@ -41,7 +41,7 @@ public func network<S,P,O,T>(start : S, params : P, request : @escaping (P.E) th
         isLoading : Observable<Bool>,
         error : Observable<NetworkError>)
     where S : ObservableType,
-    O : ObservableType, O.E == Result<T,Error>, P : ObservableConvertibleType {
+    O : ObservableType, O.E == Result<T,NetworkError>, P : ObservableConvertibleType {
         
         let isLoading = PublishSubject<Bool>()
         let error = PublishSubject<NetworkError>()
@@ -50,7 +50,7 @@ public func network<S,P,O,T>(start : S, params : P, request : @escaping (P.E) th
             .withLatestFrom(params)
             .flatMapLatest(request)
             .do(onNext: { _ in isLoading.onNext(false) })
-            .mapSuccess { error.onNext(mapNetworkError(form: $0)) }
+            .mapSuccess { error.onNext(transformError(form: $0)) }
             .shareOnce()
         
         return (result,
@@ -77,7 +77,7 @@ public func pageNetwork<S,N,P,O,L,T>(
         isMore : Observable<Bool>,
         disposables : [Disposable])
 where S : ObservableType, N : ObservableType, P : ObservableConvertibleType,
-    O : ObservableType, O.E == Result<L,Error>, L : PageList, L.E == T {
+    O : ObservableType, O.E == Result<L,NetworkError>, L : PageList, L.E == T {
         
         var page = 1
         let loadState = PublishSubject<PageLoadState>()
@@ -90,7 +90,7 @@ where S : ObservableType, N : ObservableType, P : ObservableConvertibleType,
         let fristResult = frist.do(onNext: { _ in loadState.onNext(.startRefresh) })
             .withLatestFrom(params).map { ($0, 1) }
             .flatMapLatest(request)
-            .mapSuccess { error.onNext(mapNetworkError(form: $0)) }
+            .mapSuccess { error.onNext(transformError(form: $0)) }
             .do(onNext: { _ in
                 page += 1
                 loadState.onNext(.endRefresh)
@@ -101,7 +101,7 @@ where S : ObservableType, N : ObservableType, P : ObservableConvertibleType,
             .do(onNext: { _ in loadState.onNext(.startLoadMore) })
             .withLatestFrom(params).map { ($0, page + 1) }
             .flatMapLatest(request)
-            .mapSuccess { error.onNext(mapNetworkError(form: $0)) }
+            .mapSuccess { error.onNext(transformError(form: $0)) }
             .do(onNext: { _ in
                 page += 1
                 loadState.onNext(.endLoadMore)
@@ -131,6 +131,6 @@ where S : ObservableType, N : ObservableType, P : ObservableConvertibleType,
 }
 
 
-fileprivate func mapNetworkError(form error : Error) -> NetworkError {
+fileprivate func transformError(form error : Error) -> NetworkError {
     return (error as? NetworkError) ?? .error(value: "转换 NetworkError 失败")
 }

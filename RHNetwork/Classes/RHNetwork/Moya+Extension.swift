@@ -124,19 +124,23 @@ extension ObservableType where E == Response {
     fileprivate func mapResult<T : Codable>(dataKey : String, codeKey : String,
                                 messageKey : String, successCode : Int)
         -> NetworkObservable<T> {
+            
+            let errorHandle : (Response) -> NetworkObservable<T> = { response in
+                let error = String(data: response.data, encoding: .utf8) ?? "没有错误信息"
+                return .just(.failure(.error(value: error)))
+            }
+            
             return debugNetwork()
                 .flatMap({ response -> NetworkObservable<T> in
                 guard let code = try? response.map(Int.self, atKeyPath: codeKey),
                     let message = try? response.map(String.self, atKeyPath: messageKey) else {
-                        let error = String(data: response.data, encoding: .utf8) ?? "没有错误信息"
-                        return .just(.failure(.error(value: error)))
+                        return errorHandle(response)
                 }
                 guard code == successCode else {
                     return .just(.failure(.service(code: code, message: message)))
                 }
                 guard let data = try? response.map(T.self, atKeyPath: dataKey) else {
-                    let error = String(data: response.data, encoding: .utf8) ?? "没有错误信息"
-                    return .just(NetworkResult.failure(.error(value: error)))
+                    return errorHandle(response)
                 }
                 
                 return .just(.success(data))

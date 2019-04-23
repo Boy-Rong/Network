@@ -22,7 +22,7 @@ public func network<S,O,T>(start : S, request : @escaping (S.E) throws -> O)
             .do(onNext: { _ in isLoading.onNext(true) })
             .flatMapLatest(request)
             .do(onNext: { _ in isLoading.onNext(false) })
-            .mapSuccess { error.onNext(transformError(form: $0)) }
+            .mapSuccess { error.onNext($0) }
             .shareOnce()
         
         return (result,isLoading.asObservable(), error.asObservable())
@@ -50,7 +50,7 @@ public func network<S,P,O,T>(start : S, params : P, request : @escaping (P.E) th
             .withLatestFrom(params)
             .flatMapLatest(request)
             .do(onNext: { _ in isLoading.onNext(false) })
-            .mapSuccess { error.onNext(transformError(form: $0)) }
+            .mapSuccess { error.onNext($0) }
             .shareOnce()
         
         return (result,
@@ -90,7 +90,7 @@ where S : ObservableType, N : ObservableType, P : ObservableConvertibleType,
         let fristResult = frist.do(onNext: { _ in loadState.onNext(.startRefresh) })
             .withLatestFrom(params).map { ($0, 1) }
             .flatMapLatest(request)
-            .mapSuccess { error.onNext(transformError(form: $0)) }
+            .mapSuccess { error.onNext($0) }
             .do(onNext: { _ in
                 page += 1
                 loadState.onNext(.endRefresh)
@@ -101,7 +101,7 @@ where S : ObservableType, N : ObservableType, P : ObservableConvertibleType,
             .do(onNext: { _ in loadState.onNext(.startLoadMore) })
             .withLatestFrom(params).map { ($0, page + 1) }
             .flatMapLatest(request)
-            .mapSuccess { error.onNext(transformError(form: $0)) }
+            .mapSuccess { error.onNext($0) }
             .do(onNext: { _ in
                 page += 1
                 loadState.onNext(.endLoadMore)
@@ -128,9 +128,4 @@ where S : ObservableType, N : ObservableType, P : ObservableConvertibleType,
                 error.asObservable(),
                 isHasMore.asObservable(),
                 [disposable1,disposable2,disposable3])
-}
-
-
-fileprivate func transformError(form error : Error) -> NetworkError {
-    return (error as? NetworkError) ?? .error(value: "转换 NetworkError 失败")
 }

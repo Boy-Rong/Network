@@ -26,18 +26,24 @@ extension ObservableType {
     
 }
 
+extension ObservableType {
+    /// 过滤掉nil
+    func filterNil<T>() -> Observable<T> where E == Optional<T> {
+        return filter({ $0 != nil }).map({ $0! })
+    }
+}
 
 extension ObservableType {
     
     /// map 成功后的值（过滤失败），并处理 Failure事件
-    func mapSuccess<T>(failure : ((Error) -> Void)? = nil) -> Observable<T> where Self.E == Swift.Result<T,NetworkError> {
+    func mapSuccess<T>(failure : @escaping (NetworkError) -> Void) -> Observable<T> where Self.E == Swift.Result<T,NetworkError> {
         return `do`(onNext: { result in
             switch result {
             case .success: break
-            case let .failure(error): failure?(error)
+            case let .failure(error): failure(error)
             }
         })
-            .map({ try $0.get() })
+            .map({ try? $0.get() }).filterNil()
     }
     
 }

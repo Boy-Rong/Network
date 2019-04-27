@@ -7,8 +7,9 @@
 import Foundation
 import Moya
 import Alamofire
-import RxSwift
 
+@_exported import RxSwift
+@_exported import RHCache
 
 // MARK: - 类型定义
 /// Moya

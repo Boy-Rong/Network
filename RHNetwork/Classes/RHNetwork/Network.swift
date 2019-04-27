@@ -10,22 +10,27 @@ import Foundation
 import RxSwift
 
 /// 通用网络请求方法
-public func network<S,O,T>(start : S, request : @escaping (S.E) throws -> O)
+public func network<S,O,T>(start : S,
+                           request : @escaping () throws -> O)
     -> (result : Observable<T>,
         isLoading : Observable<Bool>,
         error : Observable<NetworkError>)
-    where S : ObservableType, O : ObservableType, O.E == Result<T,NetworkError> {
+where S : ObservableType,
+    O : ObservableType,
+    O.E == NetworkResult<T> {
         
         let isLoading = PublishSubject<Bool>()
         let error = PublishSubject<NetworkError>()
-        let result = start
+        let result = start.map({ _ in () })
             .do(onNext: { _ in isLoading.onNext(true) })
             .flatMapLatest(request)
             .do(onNext: { _ in isLoading.onNext(false) })
             .mapSuccess { error.onNext($0) }
             .shareOnce()
         
-        return (result,isLoading.asObservable(), error.asObservable())
+        return (result,
+                isLoading.asObservable(),
+                error.asObservable())
 }
 
 /// 通用网络请求方法
@@ -36,12 +41,16 @@ public func network<S,O,T>(start : S, request : @escaping (S.E) throws -> O)
 ///   - selector: 请求方法
 ///   - error: 处理错误
 /// - Returns: 返回活动加载 isLoading，结果 result
-public func network<S,P,O,T>(start : S, params : P, request : @escaping (P.E) throws -> O)
+public func network<S,P,O,T>(start : S,
+                             params : P,
+                             request : @escaping (P.E) throws -> O)
     -> (result : Observable<T>,
         isLoading : Observable<Bool>,
         error : Observable<NetworkError>)
-    where S : ObservableType,
-    O : ObservableType, O.E == Result<T,NetworkError>, P : ObservableConvertibleType {
+where S : ObservableType,
+    O : ObservableType,
+    O.E == NetworkResult<T>,
+    P : ObservableConvertibleType {
         
         let isLoading = PublishSubject<Bool>()
         let error = PublishSubject<NetworkError>()
@@ -59,7 +68,7 @@ public func network<S,P,O,T>(start : S, params : P, request : @escaping (P.E) th
 }
 
 
-/// 分页网络请求通用方法
+/// 分页网络请求通用方法, 忽略重复的结果
 ///
 /// - Parameters:
 ///   - frist: 上拉信号
@@ -68,16 +77,19 @@ public func network<S,P,O,T>(start : S, params : P, request : @escaping (P.E) th
 ///   - selector: 请求方法，需要传page
 ///
 /// - Returns: loadState 加载状态，result 组合后的数据， isMore：是否还有数据, disposables 内部绑定生命周期，可与外部调用者绑定
-public func pageNetwork<S,N,P,O,L,T>(
-    frist : S, next : N, params : P,
-    request : @escaping (P.E, Int) throws -> O)
+public func pageNetwork<S,N,P,O,L,T>(frist : S,
+                                    next : N,
+                                    params : P,
+                                    request : @escaping (P.E, Int) throws -> O)
     -> (values : Observable<[T]>,
         loadState : Observable<PageLoadState>,
         error : Observable<NetworkError>,
         isMore : Observable<Bool>,
         disposables : [Disposable])
-where S : ObservableType, N : ObservableType, P : ObservableConvertibleType,
-    O : ObservableType, O.E == Result<L,NetworkError>, L : PageList, L.E == T {
+where S : ObservableType,
+    N : ObservableType, P : ObservableConvertibleType,
+    O : ObservableType, O.E == NetworkResult<L>,
+    L : PageList, L.E == T {
         
         var page = 1
         let loadState = PublishSubject<PageLoadState>()
@@ -123,7 +135,7 @@ where S : ObservableType, N : ObservableType, P : ObservableConvertibleType,
             nextResult.map({ $0.items }).withLatestFrom(values){ $1 + $0 })
             .subscribe(onNext: { values.onNext($0) })
         
-        return (values.asObservable(),
+        return (values.asObservable().distinctUntilChanged(),
                 loadState.asObservable(),
                 error.asObservable(),
                 isHasMore.asObservable(),

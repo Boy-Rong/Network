@@ -11,7 +11,7 @@ import RxSwift
 
 /// 通用网络请求方法
 public func network<S,O,T>(start : S,
-                           request : @escaping () throws -> O)
+                           request : @escaping (S.E) throws -> O)
     -> (result : Observable<T>,
         isLoading : Observable<Bool>,
         error : Observable<NetworkError>)
@@ -21,7 +21,7 @@ where S : ObservableType,
         
         let isLoading = PublishSubject<Bool>()
         let error = PublishSubject<NetworkError>()
-        let result = start.map({ _ in () })
+        let result = start
             .do(onNext: { _ in isLoading.onNext(true) })
             .flatMapLatest(request)
             .do(onNext: { _ in isLoading.onNext(false) })

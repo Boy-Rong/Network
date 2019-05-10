@@ -102,11 +102,11 @@ where S : ObservableType,
         let fristResult = frist.do(onNext: { _ in loadState.onNext(.startRefresh) })
             .withLatestFrom(params).map { ($0, 1) }
             .flatMapLatest(request)
-            .mapSuccess { error.onNext($0) }
             .do(onNext: { _ in
                 page += 1
                 loadState.onNext(.endRefresh)
             })
+            .mapSuccess { error.onNext($0) }
             .shareOnce()
         
         let nextResult = next.pausable(isHasMore)

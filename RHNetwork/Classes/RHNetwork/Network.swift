@@ -103,7 +103,7 @@ where S : ObservableType,
             .withLatestFrom(params).map { ($0, 1) }
             .flatMapLatest(request)
             .do(onNext: { _ in
-                page += 1
+                page = 1
                 loadState.onNext(.endRefresh)
             })
             .mapSuccess { error.onNext($0) }

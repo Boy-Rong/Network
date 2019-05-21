@@ -1,4 +1,4 @@
-# RHNetwork
+# Network
 
 [![CI Status](https://img.shields.io/travis/495929699g@gmail.com/RHNetwork.svg?style=flat)](https://travis-ci.org/495929699g@gmail.com/RHNetwork)
 [![Version](https://img.shields.io/cocoapods/v/RHNetwork.svg?style=flat)](https://cocoapods.org/pods/RHNetwork)
@@ -17,7 +17,7 @@ RHNetwork is available through [CocoaPods](https://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
 ```ruby
-pod 'RHNetwork'
+pod 'Network'
 ```
 
 ## Author

@@ -7,8 +7,8 @@
 #
 
 Pod::Spec.new do |s|
-  s.name             = 'Network'
-  s.version          = '0.2.3'
+  s.name             = 'Network.swift'
+  s.version          = '0.2.4'
   s.summary          = 'Moya+RxSwift封装'
 
   s.description      = <<-DESC

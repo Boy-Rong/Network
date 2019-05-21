@@ -17,12 +17,12 @@ RHNetwork is available through [CocoaPods](https://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
 ```ruby
-pod 'Network'
+pod 'Network.swift'
 ```
 
 ## Author
 
-495929699g@gmail.com, 495929699g@gmail.com
+rongheng, 495929699g@gmail.com
 
 ## License
 

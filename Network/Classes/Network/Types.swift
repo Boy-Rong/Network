@@ -15,7 +15,7 @@ import Alamofire
 public typealias TargetType = Moya.TargetType
 public typealias Response = Moya.Response
 public typealias Task = Moya.Task
-public typealias Method = Moya.Method
+public typealias HttpMethod = Moya.Method
 public typealias MoyaProvider = Moya.MoyaProvider
 public typealias MultipartFormData = Moya.MultipartFormData
 public typealias PluginType = Moya.PluginType

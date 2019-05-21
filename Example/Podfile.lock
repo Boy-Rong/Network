@@ -1,42 +1,41 @@
 PODS:
   - Alamofire (4.8.2)
-  - Moya (13.0.0):
-    - Moya/Core (= 13.0.0)
-  - Moya/Core (13.0.0):
+  - Cache.swift (0.1.6)
+  - Moya (13.0.1):
+    - Moya/Core (= 13.0.1)
+  - Moya/Core (13.0.1):
     - Alamofire (~> 4.1)
     - Result (~> 4.1)
-  - Result (4.1.0)
-  - RHCache (0.1.5)
-  - RHNetwork (0.1.3):
-    - Alamofire (~> 4.8.2)
+  - Network (0.2.2):
+    - Cache.swift (~> 0.1)
     - Moya (~> 13.0)
-    - RHCache (~> 0.1)
-    - RxSwift (~> 4.5)
-  - RxSwift (4.5.0)
+    - RxSwift (~> 5.0.0)
+  - Result (4.1.0)
+  - RxSwift (5.0.0)
 
 DEPENDENCIES:
-  - RHNetwork (from `../`)
+  - Network (from `../`)
 
 SPEC REPOS:
   https://github.com/cocoapods/specs.git:
     - Alamofire
+    - Cache.swift
     - Moya
     - Result
-    - RHCache
     - RxSwift
 
 EXTERNAL SOURCES:
-  RHNetwork:
+  Network:
     :path: "../"
 
 SPEC CHECKSUMS:
   Alamofire: ae5c501addb7afdbb13687d7f2f722c78734c2d3
-  Moya: 161263550064ff8a4948e8ff63137fd72a876292
+  Cache.swift: e42bfb27755a4df9d1fb63910fa91328cf2d2748
+  Moya: f4a4b80ff2f8a4ffc208dfb31cd91636622fee6e
+  Network: a342218172189b68997ad23596b36c5143f79ca9
   Result: bd966fac789cc6c1563440b348ab2598cc24d5c7
-  RHCache: 84cca0c6637c27039219808afb2d58be8c6196b3
-  RHNetwork: 1d7e8b905513eb04b3b29310b5b670a8add4b6ce
-  RxSwift: f172070dfd1a93d70a9ab97a5a01166206e1c575
+  RxSwift: 8b0671caa829a763bbce7271095859121cbd895f
 
-PODFILE CHECKSUM: 6d238ee9ff077ba8ca268461f86e6f0d1538f266
+PODFILE CHECKSUM: a94d21d739d052a387b6ee7a56c9811ac51c9058
 
 COCOAPODS: 1.6.0

@@ -11,14 +11,14 @@ import RxSwift
 
 
 /// 网路可用性服务
-public struct NetworkReachabilityService {
+public struct ReachabilityService {
     
-    public static let shared = NetworkReachabilityService()
+    public static let shared = ReachabilityService()
     
     private let reachability = NetworkReachabilityManager()
     
     /// 当前网路状态
-    var currentStatus : NetworkReachabilityStatus {
+    var currentStatus : ReachabilityStatus {
         return reachability?.networkReachabilityStatus ?? .notReachable
     }
     
@@ -27,17 +27,24 @@ public struct NetworkReachabilityService {
         return reachability?.isReachable ?? false
     }
     
-    /// 默认开始网络监听
+    private let currentSubject = BehaviorSubject<ReachabilityStatus>(value: .notReachable)
+    
+    /// 当前网络状态序列
+    var current : Observable<ReachabilityStatus> {
+        return currentSubject.asObservable()
+    }
+    
     private init() {
         reachability?.listener = networkStatusChange(_:)
         reachability?.startListening()
     }
     
-    private func networkStatusChange(_ status : NetworkReachabilityStatus) {
+    private func networkStatusChange(_ status : ReachabilityStatus) {
         DispatchQueue.main.async {
             NotificationCenter.default.post(name: .reachabilityChanged, object: nil,
                                             userInfo: [NetworkKey.reachabilityChanged : status])
         }
+        currentSubject.onNext(status)
     }
     
     /// 停止监听网路状态

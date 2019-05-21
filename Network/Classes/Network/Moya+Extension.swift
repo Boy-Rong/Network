@@ -9,7 +9,7 @@
 import Foundation
 import RxSwift
 import Moya
-import RHCache
+import Cache
 
 // MARK: - 让Provider 有Rx属性
 extension MoyaProvider: ReactiveCompatible {}
@@ -18,7 +18,7 @@ extension MoyaProvider: ReactiveCompatible {}
 public extension Reactive where Base: MoyaProviderType {
     
     /// Moya请求Response方法
-    /// - Parameter token: 带有缓存机制，取决于 TargetType.cache，取缓存时用RHCache取 NetworkCacheType.cacheRequestKey 字段下的数据，结果为 [String]，再将结果转换为[TargetType]，然后从新发请求
+    /// - Parameter token: 带有缓存机制，取决于 TargetType.cache，取缓存时用Cache取 NetworkCacheType.cacheRequestKey 字段下的数据，结果为 [String]，再将结果转换为[TargetType]，然后从新发请求
     func requestResponse(_ token: Base.Target) -> Observable<Response> {
         
         /// 请求错误的处理
@@ -26,15 +26,15 @@ public extension Reactive where Base: MoyaProviderType {
             // 缓存失败任务（如数据库，不是使用缓存）
             if token.cache == .cacheRequest,
                 let target = token as? TargetTransform,
-                let value = target.toValue() {
+                let value = try? target.toJSON() {
                 
                 // 先异步获取缓存
-                RHCache.shared.object([String].self, for: NetworkCacheType.cacheRequestKey, completion: { result in
+                Cache.shared.object([String].self, for: NetworkCacheType.cacheRequestKey, completion: { result in
                     guard var values = try? result.get() else { return }
                     values.append(value)
                     
                     // 再将新的数据加到values中，在异步缓存
-                    RHCache.shared.asyncCachedObject(values, for: NetworkCacheType.cacheRequestKey, completion: { _ in})
+                    Cache.shared.asyncCachedObject(values, for: NetworkCacheType.cacheRequestKey, completion: { _ in})
                 })
             }
         }
@@ -43,12 +43,12 @@ public extension Reactive where Base: MoyaProviderType {
             
             // 先取缓存
             if token.cache == .cacheResponse,
-                let response = try? RHCache.shared.response(for: token) {
+                let response = try? Cache.shared.response(for: token) {
                 observer.onNext(response)
             }
             
             // 如果 没有可用网络 并且 不缓存策略 的情况下 直接发送错误并结束，不发会送请求
-            if !NetworkReachabilityService.shared.isHasNetwork && token.cache != .cacheResponse {
+            if !ReachabilityService.shared.isHasNetwork && token.cache != .cacheResponse {
                 observer.onError(NetworkError.error(value: "网络不可用"))
                 errorHandle()
                 
@@ -64,7 +64,7 @@ public extension Reactive where Base: MoyaProviderType {
                     
                     // 缓存数据
                     if token.cache == .cacheResponse {
-                        RHCache.shared.asyncCachedResponse(for: token, completion: { _ in })
+                        Cache.shared.asyncCachedResponse(for: token, completion: { _ in })
                     }
         
                 case let .failure(error):
@@ -104,10 +104,8 @@ public extension Reactive where Base: MoyaProviderType {
     
 }
 
-
-// MARK: - 对 Response 序列扩展，转成Result<T,Error>
+// MARK: - 对 Response 序列扩展 转换成对应数据
 extension ObservableType where E == Response {
-    
     public func mapJSON(failsOnEmptyData: Bool = true) -> Observable<Any> {
         return flatMap { Observable.just(try $0.mapJSON(failsOnEmptyData: failsOnEmptyData)) }
     }
@@ -119,6 +117,10 @@ extension ObservableType where E == Response {
     public func map<D: Decodable>(_ type: D.Type, atKeyPath keyPath: String? = nil, using decoder: JSONDecoder = JSONDecoder(), failsOnEmptyData: Bool = true) -> Observable<D> {
         return flatMap { Observable.just(try $0.map(type, atKeyPath: keyPath, using: decoder, failsOnEmptyData: failsOnEmptyData)) }
     }
+}
+
+// MARK: - 对 Response 序列扩展，转成Result<T,Error>
+extension ObservableType where E == Response {
     
     /// 将内容 map成 Result<T,NetworkError>
     fileprivate func mapResult<T : Codable>(dataKey : String, codeKey : String,

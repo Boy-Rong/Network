@@ -9,7 +9,6 @@ import Moya
 import Alamofire
 
 @_exported import RxSwift
-@_exported import RHCache
 
 // MARK: - 类型定义
 /// Moya
@@ -19,6 +18,7 @@ public typealias Task = Moya.Task
 public typealias Method = Moya.Method
 public typealias MoyaProvider = Moya.MoyaProvider
 public typealias MultipartFormData = Moya.MultipartFormData
+public typealias PluginType = Moya.PluginType
 
 public typealias ParameterEncoding = Alamofire.ParameterEncoding
 public typealias JSONEncoding = Alamofire.JSONEncoding
@@ -34,7 +34,7 @@ public typealias NetworkVoid = Swift.Result<Void,NetworkError>
 public typealias NetworkVoidObservable = Observable<NetworkVoid>
 
 
-public typealias NetworkReachabilityStatus = Alamofire.NetworkReachabilityManager.NetworkReachabilityStatus
+public typealias ReachabilityStatus = Alamofire.NetworkReachabilityManager.NetworkReachabilityStatus
 
 /// 网络请求Key值
 public struct NetworkKey {
@@ -106,7 +106,7 @@ public enum NetworkCacheType : Int {
     
     /// 缓存错误请求的Key
     static var cacheRequestKey : String {
-        return "RHCache.error.cacheRequest"
+        return "Cache.error.cacheRequest"
     }
 }
 

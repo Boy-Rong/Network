@@ -33,33 +33,14 @@ public extension TargetType {
 }
 
 /// Target转换协议
-public protocol TargetTransform where Self : TargetType {
+public protocol TargetTransform {
     
     /// TargetType转换到String
-    func toValue() -> String?
+    func toJSON() throws -> String
     
     /// 根据String生成TargetType
-    init(value : String)
+    init(json : String) throws
     
 }
 
 
-public extension Task {
-    /// 自定义Int值
-    var rawValue : Int {
-        switch self {
-        case .requestPlain: return 0
-        case .requestData: return 1
-        case .requestJSONEncodable: return 2
-        case .requestCustomJSONEncodable: return 3
-        case .requestParameters: return 4
-        case .requestCompositeData: return 5
-        case .requestCompositeParameters: return 6
-        case .uploadFile: return 7
-        case .uploadMultipart: return 8
-        case .uploadCompositeMultipart: return 9
-        case .downloadDestination: return 10
-        case .downloadParameters: return 11
-        }
-    }
-}

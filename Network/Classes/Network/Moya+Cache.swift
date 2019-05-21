@@ -6,7 +6,7 @@
 //  Copyright © 2019 荣恒. All rights reserved.
 //
 
-import RHCache
+import Cache
 import Moya
 
 /// response存储者
@@ -25,7 +25,7 @@ fileprivate func getStorage() throws -> Storage<Response> {
 
 
 //MARK : - 缓存网络成功的数据
-public extension RHCache {
+public extension Cache {
     
     /// 同步获取成功请求的数据
     func response(for target: TargetType) throws -> Response {
@@ -67,7 +67,7 @@ public extension RHCache {
     
 }
 
-public extension RHCache {
+public extension Cache {
     
     /// 查询所有失败的请求
     func queryFailureRequests(_ completion : @escaping (Result<[String]>) -> Void) {

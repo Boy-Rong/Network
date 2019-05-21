@@ -10,6 +10,10 @@ import Foundation
 import RxSwift
 
 /// 通用网络请求方法
+/// - Parameters:
+///   - start: 开始请求的序列
+///   - request: 请求方法序列
+/// - Returns: result 结果，isLoading 是否加载中，error 错误信息
 public func network<S,O,T>(start : S,
                            request : @escaping (S.E) throws -> O)
     -> (result : Observable<T>,
@@ -36,11 +40,10 @@ where S : ObservableType,
 /// 通用网络请求方法
 ///
 /// - Parameters:
-///   - start: 请求信号
-///   - params: 参数
-///   - selector: 请求方法
-///   - error: 处理错误
-/// - Returns: 返回活动加载 isLoading，结果 result
+///   - start: 请求序列
+///   - params: 参数序列
+///   - request: 请求方法
+/// - Returns: result 结果，isLoading 是否加载中，error 错误信息
 public func network<S,P,O,T>(start : S,
                              params : P,
                              request : @escaping (P.E) throws -> O)
@@ -71,12 +74,12 @@ where S : ObservableType,
 /// 分页网络请求通用方法, 忽略重复的结果
 ///
 /// - Parameters:
-///   - frist: 上拉信号
+///   - frist: 上拉序列
 ///   - next: 下拉序列
-///   - params: 参数，不包含page
+///   - params: 参数序列，不包含page
 ///   - selector: 请求方法，需要传page
 ///
-/// - Returns: loadState 加载状态，result 组合后的数据， isMore：是否还有数据, disposables 内部绑定生命周期，可与外部调用者绑定
+/// - Returns: values 最终结果，直接用就行 loadState 加载状态，result 组合后的数据， isMore：是否还有数据, disposable 内部绑定生命周期，可与外部调用者绑定
 public func pageNetwork<S,N,P,O,L,T>(frist : S,
                                     next : N,
                                     params : P,
@@ -85,7 +88,7 @@ public func pageNetwork<S,N,P,O,L,T>(frist : S,
         loadState : Observable<PageLoadState>,
         error : Observable<NetworkError>,
         isMore : Observable<Bool>,
-        disposables : [Disposable])
+        disposable : Disposable)
 where S : ObservableType,
     N : ObservableType, P : ObservableConvertibleType,
     O : ObservableType, O.E == NetworkResult<L>,
@@ -135,9 +138,10 @@ where S : ObservableType,
             nextResult.map({ $0.items }).withLatestFrom(values){ $1 + $0 })
             .subscribe(onNext: { values.onNext($0) })
         
+        
         return (values.asObservable().distinctUntilChanged(),
                 loadState.asObservable(),
                 error.asObservable(),
                 isHasMore.asObservable(),
-                [disposable1,disposable2,disposable3])
+                CompositeDisposable(disposables: [disposable1,disposable2,disposable3]))
 }

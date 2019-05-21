@@ -1,7 +1,7 @@
 use_frameworks!
 
 target 'RHNetwork_Example' do
-  pod 'RHNetwork', :path => '../'
+  pod 'Network', :path => '../'
 
   target 'RHNetwork_Tests' do
     inherit! :search_paths

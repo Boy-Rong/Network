@@ -42,10 +42,10 @@ extension ObservableType where E == Response {
     
     /// 将内容 map成 Result<Void,NetworkError>
     public func mapSuccess(codeKey : String, messageKey : String, successCode : Int)
-        -> NetworkVoidObservable {
+        -> NetworkObservable<Void> {
             return self
                 .do(onNext: { handleCode(codeKey, response: $0) })
-                .flatMap({ response -> NetworkVoidObservable in
+                .flatMap({ response -> NetworkObservable<Void> in
                     guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
                         let error = String(data: response.data, encoding: .utf8) ?? "没有错误信息"
                         return .just(.failure(.error(value: error)))

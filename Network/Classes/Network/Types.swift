@@ -5,33 +5,33 @@
 //
 
 import Foundation
-import Moya
 import Alamofire
 
+@_exported import Moya
 @_exported import RxSwift
 
 // MARK: - 类型定义
 /// Moya
-public typealias TargetType = Moya.TargetType
-public typealias Response = Moya.Response
-public typealias Task = Moya.Task
-public typealias HttpMethod = Moya.Method
-public typealias MoyaProvider = Moya.MoyaProvider
-public typealias MultipartFormData = Moya.MultipartFormData
-public typealias PluginType = Moya.PluginType
-
-public typealias ParameterEncoding = Alamofire.ParameterEncoding
-public typealias JSONEncoding = Alamofire.JSONEncoding
-public typealias URLEncoding = Alamofire.URLEncoding
-public typealias PropertyListEncoding = Alamofire.PropertyListEncoding
+//public typealias TargetType = Moya.TargetType
+//public typealias Response = Moya.Response
+//public typealias Task = Moya.Task
+//public typealias HttpMethod = Moya.Method
+//public typealias MoyaProvider = Moya.MoyaProvider
+//public typealias MultipartFormData = Moya.MultipartFormData
+//public typealias PluginType = Moya.PluginType
+//
+//public typealias ParameterEncoding = Alamofire.ParameterEncoding
+//public typealias JSONEncoding = Alamofire.JSONEncoding
+//public typealias URLEncoding = Alamofire.URLEncoding
+//public typealias PropertyListEncoding = Alamofire.PropertyListEncoding
 
 /// 网路结果类型
 public typealias NetworkResult<T> = Swift.Result<T,NetworkError>
 /// 网路结果序列
 public typealias NetworkObservable<T> = Observable<NetworkResult<T>>
 
-public typealias NetworkVoid = Swift.Result<Void,NetworkError>
-public typealias NetworkVoidObservable = Observable<NetworkVoid>
+//public typealias NetworkVoid = Swift.Result<Void,NetworkError>
+//public typealias NetworkVoidObservable = Observable<NetworkVoid>
 
 
 public typealias ReachabilityStatus = Alamofire.NetworkReachabilityManager.NetworkReachabilityStatus

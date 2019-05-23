@@ -85,7 +85,7 @@ public extension Reactive where Base: MoyaProviderType {
         codeKey : String = NetworkResultKey.code,
         messageKey : String = NetworkResultKey.message,
         successCode : Int = NetworkResultKey.success) -> NetworkObservable<T> {
-        return request(token)
+        return requestResponse(token)
             .mapResult(dataKey: dataKey,
                        codeKey: codeKey,
                        messageKey: messageKey,
@@ -98,7 +98,7 @@ public extension Reactive where Base: MoyaProviderType {
         codeKey : String = NetworkResultKey.code,
         messageKey : String = NetworkResultKey.message,
         successCode : Int = NetworkResultKey.success) -> NetworkObservable<Void> {
-        return request(token)
+        return requestResponse(token)
             .mapSuccess(codeKey: codeKey,
                         messageKey: messageKey,
                         successCode: successCode)

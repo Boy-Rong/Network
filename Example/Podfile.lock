@@ -6,7 +6,7 @@ PODS:
   - Moya/Core (13.0.1):
     - Alamofire (~> 4.1)
     - Result (~> 4.1)
-  - Network.swift (0.2.4):
+  - Network.swift (0.2.7):
     - Cache.swift (~> 0.1)
     - Moya (~> 13.0)
     - RxSwift (~> 5.0)
@@ -32,7 +32,7 @@ SPEC CHECKSUMS:
   Alamofire: ae5c501addb7afdbb13687d7f2f722c78734c2d3
   Cache.swift: b0182ba15e7b9f32eb4be6f22e45bcb2ea2d16c5
   Moya: f4a4b80ff2f8a4ffc208dfb31cd91636622fee6e
-  Network.swift: b2e06d5d29196006cc47cb949c4fcaef69c25863
+  Network.swift: 64467d274b1f2c7ffb73d6bb6bc688b203fd7fa5
   Result: bd966fac789cc6c1563440b348ab2598cc24d5c7
   RxSwift: 8b0671caa829a763bbce7271095859121cbd895f
 

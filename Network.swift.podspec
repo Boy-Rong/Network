@@ -8,11 +8,11 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Network.swift'
-  s.version          = '0.2.7'
-  s.summary          = 'Moya+RxSwift封装'
+  s.version          = '0.3.0'
+  s.summary          = 'Moya+RxSwift 扩展'
 
   s.description      = <<-DESC
-Moya网路请求封装, 可选缓存，RxSwift支持
+对Moya扩展, 可选缓存，RxSwift支持
                        DESC
 
   s.homepage         = 'https://github.com/495929699/Network'
@@ -29,10 +29,6 @@ Moya网路请求封装, 可选缓存，RxSwift支持
   }
 
   s.source_files = 'Network/Classes/**/*.swift'
-  
-  # s.resource_bundles = {
-  #   'Network' => ['RHNetwork/Assets/*.png']
-  # }
 
   s.dependency 'Moya', '~>13.0'
   s.dependency 'RxSwift', '~>5.0'

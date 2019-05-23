@@ -36,14 +36,24 @@ public typealias NetworkVoidObservable = Observable<NetworkVoid>
 
 public typealias ReachabilityStatus = Alamofire.NetworkReachabilityManager.NetworkReachabilityStatus
 
-/// 网络请求Key值
-public struct NetworkKey {
-    public static let code = "code"
-    public static let message = "msg"
-    public static let success = 200
-    public static let data = "data"
+/// 网络请求Key值, 外部可根据实际需求更改值
+public struct NetworkResultKey {
+    public private(set) static var code = "code"
+    public private(set) static var message = "msg"
+    public private(set) static var data = "data"
+    public private(set) static var success = 200
     
-    public static let reachabilityChanged = "status"
+    /// 替换默认的网络请求Key
+    public static func replace(
+        codeKey : String = NetworkResultKey.code,
+        messageKey : String = NetworkResultKey.message,
+        dataKey : String = NetworkResultKey.data,
+        successKey : Int = NetworkResultKey.success) {
+        self.code = codeKey
+        self.message = messageKey
+        self.data = dataKey
+        self.success = successKey
+    }
 }
 
 public extension Notification.Name {

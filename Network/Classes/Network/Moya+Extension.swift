@@ -83,10 +83,10 @@ public extension Reactive where Base: MoyaProviderType {
     /// Moya请求Result方法 -> Observable<Result<R,NetworkError>>
     func requestResult<T : Codable>(
         _ token: Base.Target,
-        dataKey : String = NetworkKey.data,
-        codeKey : String = NetworkKey.code,
-        messageKey : String = NetworkKey.message,
-        successCode : Int = NetworkKey.success) -> NetworkObservable<T> {
+        dataKey : String = NetworkResultKey.data,
+        codeKey : String = NetworkResultKey.code,
+        messageKey : String = NetworkResultKey.message,
+        successCode : Int = NetworkResultKey.success) -> NetworkObservable<T> {
         return requestResponse(token)
             .mapResult(dataKey: dataKey, codeKey: codeKey,
                        messageKey: messageKey, successCode: successCode)
@@ -95,9 +95,9 @@ public extension Reactive where Base: MoyaProviderType {
     /// Moya请求Success方法 -> Observable<Result<Void,NetworkError>>
     func requestSuccess(
         _ token: Base.Target,
-        codeKey : String = NetworkKey.code,
-        messageKey : String = NetworkKey.message,
-        successCode : Int = NetworkKey.success) -> NetworkObservable<Void> {
+        codeKey : String = NetworkResultKey.code,
+        messageKey : String = NetworkResultKey.message,
+        successCode : Int = NetworkResultKey.success) -> NetworkObservable<Void> {
         return requestResponse(token)
             .mapSuccess(codeKey: codeKey, messageKey: messageKey, successCode: successCode)
     }
@@ -134,11 +134,11 @@ extension ObservableType where E == Response {
             
             return debugNetwork()
                 .flatMap({ response -> NetworkObservable<T> in
-                guard let code = try? response.map(Int.self, atKeyPath: codeKey),
-                    let message = try? response.map(String.self, atKeyPath: messageKey) else {
+                guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
                         return errorHandle(response)
                 }
                 guard code == successCode else {
+                    let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? ""
                     return .just(.failure(.service(code: code, message: message)))
                 }
                 guard let data = try? response.map(T.self, atKeyPath: dataKey) else {
@@ -155,12 +155,12 @@ extension ObservableType where E == Response {
         -> NetworkVoidObservable {
             return debugNetwork()
                 .flatMap({ response -> NetworkVoidObservable in
-                guard let code = try? response.map(Int.self, atKeyPath: codeKey),
-                    let message = try? response.map(String.self, atKeyPath: messageKey) else {
+                guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
                         let error = String(data: response.data, encoding: .utf8) ?? "没有错误信息"
                         return .just(.failure(.error(value: error)))
                 }
                 guard code == successCode else {
+                    let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? ""
                     return .just(.failure(.service(code: code, message: message)))
                 }
                 
@@ -170,8 +170,8 @@ extension ObservableType where E == Response {
     }
     
     /// 预处理网路请求（发出服务器401通知），打印网路请求的响应
-    func debugNetwork(codeKey : String = NetworkKey.code,
-                      messageKey : String = NetworkKey.message) -> Observable<Response> {
+    func debugNetwork(codeKey : String = NetworkResultKey.code,
+                      messageKey : String = NetworkResultKey.message) -> Observable<Response> {
         return self.do(onNext: { response in
             logDebug("================================请求结果==============================")
             if let request = response.request,

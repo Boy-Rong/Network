@@ -13,6 +13,10 @@ import RxSwift
 /// 网路可用性服务
 public struct ReachabilityService {
     
+    public enum Key : String {
+        case statusChanged = "status.changed"
+    }
+    
     public static let shared = ReachabilityService()
     
     private let reachability = NetworkReachabilityManager()
@@ -42,7 +46,7 @@ public struct ReachabilityService {
     private func networkStatusChange(_ status : ReachabilityStatus) {
         DispatchQueue.main.async {
             NotificationCenter.default.post(name: .reachabilityChanged, object: nil,
-                                            userInfo: [NetworkKey.reachabilityChanged : status])
+                                            userInfo: [Key.statusChanged : status])
         }
         currentSubject.onNext(status)
     }

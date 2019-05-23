@@ -17,7 +17,7 @@ extension MoyaProvider: ReactiveCompatible {}
 public extension Reactive where Base: MoyaProviderType {
     /// Moya请求Response方法
     /// - Parameter token: 带有缓存机制，取决于 TargetType.cache，取缓存时用Cache取 NetworkCacheType.cacheRequestKey 字段下的数据，结果为 [String]，再将结果转换为[TargetType]，然后从新发请求
-    func request(_ token: Base.Target) -> Observable<Response> {
+    func requestResponse(_ token: Base.Target) -> Observable<Response> {
         
         /// 请求错误的处理
         let errorHandle = {

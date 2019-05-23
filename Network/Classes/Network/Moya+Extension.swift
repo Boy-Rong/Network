@@ -123,7 +123,7 @@ extension ObservableType where E == Response {
 extension ObservableType where E == Response {
     
     /// 将内容 map成 Result<T,NetworkError>
-    fileprivate func mapResult<T : Codable>(dataKey : String, codeKey : String,
+    public func mapResult<T : Codable>(dataKey : String, codeKey : String,
                                 messageKey : String, successCode : Int)
         -> NetworkObservable<T> {
             
@@ -151,7 +151,7 @@ extension ObservableType where E == Response {
     }
     
     /// 将内容 map成 Result<Void,NetworkError>
-    fileprivate func mapSuccess(codeKey : String, messageKey : String, successCode : Int)
+    public func mapSuccess(codeKey : String, messageKey : String, successCode : Int)
         -> NetworkVoidObservable {
             return debugNetwork()
                 .flatMap({ response -> NetworkVoidObservable in

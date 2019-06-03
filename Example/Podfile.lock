@@ -1,13 +1,11 @@
 PODS:
   - Alamofire (4.8.2)
-  - Cache.swift (0.1.7)
   - Moya (13.0.1):
     - Moya/Core (= 13.0.1)
   - Moya/Core (13.0.1):
     - Alamofire (~> 4.1)
     - Result (~> 4.1)
-  - Network.swift (0.3.0):
-    - Cache.swift (~> 0.1)
+  - Network.swift (0.4.0):
     - Moya (~> 13.0)
     - RxSwift (~> 5.0)
   - Result (4.1.0)
@@ -19,7 +17,6 @@ DEPENDENCIES:
 SPEC REPOS:
   https://github.com/cocoapods/specs.git:
     - Alamofire
-    - Cache.swift
     - Moya
     - Result
     - RxSwift
@@ -30,9 +27,8 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Alamofire: ae5c501addb7afdbb13687d7f2f722c78734c2d3
-  Cache.swift: b0182ba15e7b9f32eb4be6f22e45bcb2ea2d16c5
   Moya: f4a4b80ff2f8a4ffc208dfb31cd91636622fee6e
-  Network.swift: eb23bd7b243a71cb740a547a83dfcc33dd5f5707
+  Network.swift: 05750d3f4687f519c71f8d9572318b5cec128c49
   Result: bd966fac789cc6c1563440b348ab2598cc24d5c7
   RxSwift: 8b0671caa829a763bbce7271095859121cbd895f
 

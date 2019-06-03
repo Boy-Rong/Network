@@ -125,6 +125,7 @@ extension Reactive where Base: MoyaProviderType {
         
         return Observable<Response>.create { observer in
             guard let token = token as? CacheType,
+                token.cache == .cacheResponse,
                 let response = try? token.getResponse() else { return disposable }
             
             observer.onNext(response)

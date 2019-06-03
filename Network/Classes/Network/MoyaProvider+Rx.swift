@@ -10,13 +10,12 @@ import Foundation
 import RxSwift
 import Moya
 
-
 extension MoyaProvider: ReactiveCompatible {}
 
 // MARK: - 自己封装
 public extension Reactive where Base: MoyaProviderType {
     
-    /// 请求数据，包括网络和缓存
+    /// 请求数据，带缓冲逻辑
     func request(_ token : Base.Target) -> Observable<Response> {
         let network = requestNetwork(token).map { Optional($0) }.startWith(nil)
         let cache = requestCache(token).map { Optional($0) }.startWith(nil)
@@ -30,6 +29,77 @@ public extension Reactive where Base: MoyaProviderType {
                 }
         }
     }
+    
+    /// 请求成功
+    func request(_ token : Base.Target,
+                 codeKey : String = NetworkResultKey.code,
+                 messageKey : String = NetworkResultKey.message,
+                 successCode : Int = NetworkResultKey.success
+        ) -> NetworkObservable<Void> {
+        
+        return request(token)
+            .do(onNext: { handleCode(codeKey, response: $0) })
+            .flatMap({ response -> NetworkObservable<Void> in
+                guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
+                    let error = String(data: response.data, encoding: .utf8) ?? "没有错误信息"
+                    return .just(.failure(.error(value: error)))
+                }
+                guard code == successCode else {
+                    let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? ""
+                    return .just(.failure(.service(code: code, message: message)))
+                }
+                
+                return .just(.success(()))
+            })
+            .catchError({ .just(.failure(.network(value: $0))) })
+    }
+    
+    /// 请求成功的结果数据
+    func request<T>(_ token : Base.Target,
+                    dataKey : String = NetworkResultKey.data,
+                    codeKey : String = NetworkResultKey.code,
+                    messageKey : String = NetworkResultKey.message,
+                    successCode : Int = NetworkResultKey.success)
+        -> NetworkObservable<T> where T : Codable {
+            
+            let errorHandle : (Response) -> NetworkObservable<T> = { response in
+                let error = String(data: response.data, encoding: .utf8) ?? "没有错误信息"
+                return .just(.failure(.error(value: error)))
+            }
+            
+            return request(token)
+                .do(onNext: { handleCode(codeKey, response: $0) })
+                .flatMap({ response -> NetworkObservable<T> in
+                    guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
+                        return errorHandle(response)
+                    }
+                    guard code == successCode else {
+                        let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? ""
+                        return .just(.failure(.service(code: code, message: message)))
+                    }
+                    guard let data = try? response.map(T.self, atKeyPath: dataKey) else {
+                        return errorHandle(response)
+                    }
+                    
+                    return .just(.success(data))
+                })
+                .catchError({ .just(.failure(.network(value: $0))) })
+    }
+}
+
+/// 处理服务器Code
+private func handleCode(_ codeKey : String, response : Response) {
+    guard let code = try? response.map(Int.self, atKeyPath: codeKey) else { return }
+    switch code {
+    case 401:
+        NotificationCenter.default.post(name: .networkService_401, object: nil)
+        
+    default: break
+    }
+}
+
+
+extension Reactive where Base: MoyaProviderType {
     
     func requestNetwork(_ token : Base.Target) -> Observable<Response> {
         /// 先判断是否有网

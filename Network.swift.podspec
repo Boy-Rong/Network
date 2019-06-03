@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Network.swift'
-  s.version          = '0.3.1'
+  s.version          = '0.4.0'
   s.summary          = 'Moya+RxSwift 扩展'
 
   s.description      = <<-DESC
@@ -32,6 +32,6 @@ Pod::Spec.new do |s|
 
   s.dependency 'Moya', '~>13.0'
   s.dependency 'RxSwift', '~>5.0'
-  s.dependency 'Cache.swift', '~>0.1'
+  #s.dependency 'Cache.swift', '~>0.1'
   
 end

@@ -12,9 +12,12 @@ import Moya
 extension ObservableType where E == Response {
     
     /// 将内容 map成 Result<T,NetworkError>
-    public func mapResult<T : Codable>(dataKey : String, codeKey : String,
-                                       messageKey : String, successCode : Int)
-        -> NetworkObservable<T> {
+    public func mapResult<T : Codable>(
+        dataKey : String = NetworkResultKey.data,
+        codeKey : String = NetworkResultKey.code,
+        messageKey : String = NetworkResultKey.message,
+        successCode : Int = NetworkResultKey.success
+    ) -> NetworkObservable<T> {
             
             let errorHandle : (Response) -> NetworkObservable<T> = { response in
                 let error = String(data: response.data, encoding: .utf8) ?? "没有错误信息"
@@ -41,8 +44,11 @@ extension ObservableType where E == Response {
     }
     
     /// 将内容 map成 Result<Void,NetworkError>
-    public func mapSuccess(codeKey : String, messageKey : String, successCode : Int)
-        -> NetworkObservable<Void> {
+    public func mapSuccess(
+        codeKey : String = NetworkResultKey.code,
+        messageKey : String = NetworkResultKey.message,
+        successCode : Int = NetworkResultKey.success
+    )  -> NetworkObservable<Void> {
             return self
                 .do(onNext: { handleCode(codeKey, response: $0) })
                 .flatMap({ response -> NetworkObservable<Void> in

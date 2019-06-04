@@ -21,9 +21,6 @@ public protocol CacheType where Self : TargetType {
     func cacheRequest()
 }
 public extension CacheType {
-    var cache : NetworkCacheType {
-        return .none
-    }
     var cachedKey: String {
         return "\(baseURL.absoluteString)\(path),\(method.rawValue),\(headers ?? [:]),\(task)"
     }

@@ -40,16 +40,12 @@ public extension Reactive where Base: MoyaProviderType {
         return request(token)
             .do(onNext: { handleCode(codeKey, response: $0) })
             .flatMap({ response -> NetworkObservable<Void> in
-                guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
-                    let error = String(data: response.data, encoding: .utf8) ?? "没有错误信息"
-                    return .just(.failure(.error(value: error)))
-                }
-                guard code == successCode else {
-                    let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? ""
-                    return .just(.failure(.service(code: code, message: message)))
-                }
-                
-                return .just(.success(()))
+                return .just(
+                    transformSuccess(for: response,
+                                     codeKey: codeKey,
+                                     messageKey: messageKey,
+                                     successCode: successCode)
+                )
             })
             .catchError({ .just(.failure(.network(value: $0))) })
     }
@@ -59,29 +55,19 @@ public extension Reactive where Base: MoyaProviderType {
                     dataKey : String = NetworkResultKey.data,
                     codeKey : String = NetworkResultKey.code,
                     messageKey : String = NetworkResultKey.message,
-                    successCode : Int = NetworkResultKey.success)
-        -> NetworkObservable<T> where T : Codable {
-            
-            let errorHandle : (Response) -> NetworkObservable<T> = { response in
-                let error = String(data: response.data, encoding: .utf8) ?? "没有错误信息"
-                return .just(.failure(.error(value: error)))
-            }
-            
+                    successCode : Int = NetworkResultKey.success
+        ) -> NetworkObservable<T> where T : Codable {
+
             return request(token)
                 .do(onNext: { handleCode(codeKey, response: $0) })
                 .flatMap({ response -> NetworkObservable<T> in
-                    guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
-                        return errorHandle(response)
-                    }
-                    guard code == successCode else {
-                        let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? ""
-                        return .just(.failure(.service(code: code, message: message)))
-                    }
-                    guard let data = try? response.map(T.self, atKeyPath: dataKey) else {
-                        return errorHandle(response)
-                    }
-                    
-                    return .just(.success(data))
+                    return .just(
+                        transformResult(for: response,
+                                        dataKey: dataKey,
+                                        codeKey: codeKey,
+                                        messageKey: messageKey,
+                                        successCode: successCode)
+                    )
                 })
                 .catchError({ .just(.failure(.network(value: $0))) })
     }
@@ -96,6 +82,48 @@ private func handleCode(_ codeKey : String, response : Response) {
         
     default: break
     }
+}
+
+private func transformResult<T>(
+    for response : Response,
+    dataKey : String,
+    codeKey : String,
+    messageKey : String,
+    successCode : Int
+    ) -> NetworkResult<T> where T : Codable {
+    
+    guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
+        let error = "服务器code解析错误\n\(String(data: response.data, encoding: .utf8) ?? "")"
+        return .failure(.error(value: error))
+    }
+    guard code == successCode else {
+        let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? "code不等于\(successCode)"
+        return .failure(.service(code: code, message: message))
+    }
+    guard let data = try? response.map(T.self, atKeyPath: dataKey) else {
+        return .failure(.error(value: "请求成功，但data解析错误"))
+    }
+    
+    return .success(data)
+}
+
+private func transformSuccess(
+    for response : Response,
+    codeKey : String,
+    messageKey : String,
+    successCode : Int
+    ) -> NetworkResult<Void> {
+    
+    guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
+        let error = "服务器code解析错误\n\(String(data: response.data, encoding: .utf8) ?? "")"
+        return .failure(.error(value: error))
+    }
+    guard code == successCode else {
+        let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? "code不等于\(successCode)"
+        return .failure(.service(code: code, message: message))
+    }
+    
+    return .success(())
 }
 
 

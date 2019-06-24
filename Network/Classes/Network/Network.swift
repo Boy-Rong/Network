@@ -15,6 +15,7 @@ import RxSwift
 ///   - request: 请求方法序列
 /// - Returns: result 结果，isLoading 是否加载中，error 错误信息
 public func network<S,O,T>(start : S,
+                           strategy : RequestStrategy = .latest,
                            request : @escaping (S.E) throws -> O)
     -> (result : Observable<T>,
         isLoading : Observable<Bool>,
@@ -27,7 +28,7 @@ where S : ObservableType,
         let error = PublishSubject<NetworkError>()
         let result = start
             .do(onNext: { _ in isLoading.onNext(true) })
-            .flatMapLatest(request)
+            .flatMap(strategy: strategy, for: request)
             .do(onNext: { _ in isLoading.onNext(false) })
             .mapSuccess { error.onNext($0) }
             .shareOnce()
@@ -46,6 +47,7 @@ where S : ObservableType,
 /// - Returns: result 结果，isLoading 是否加载中，error 错误信息
 public func network<S,P,O,T>(start : S,
                              params : P,
+                             strategy : RequestStrategy = .latest,
                              request : @escaping (P.E) throws -> O)
     -> (result : Observable<T>,
         isLoading : Observable<Bool>,
@@ -60,7 +62,7 @@ where S : ObservableType,
         let result = start
             .do(onNext: { _ in isLoading.onNext(true) })
             .withLatestFrom(params)
-            .flatMapLatest(request)
+            .flatMap(strategy: strategy, for: request)
             .do(onNext: { _ in isLoading.onNext(false) })
             .mapSuccess { error.onNext($0) }
             .shareOnce()
@@ -80,66 +82,61 @@ where S : ObservableType,
 ///   - selector: 请求方法，需要传page
 ///
 /// - Returns: values 最终结果，直接用就行 loadState 加载状态，result 组合后的数据， isMore：是否还有数据, disposable 内部绑定生命周期，可与外部调用者绑定
-public func pageNetwork<S,N,P,O,L,T>(frist : S,
-                                    next : N,
-                                    params : P,
-                                    request : @escaping (P.E, Int) throws -> O)
-    -> (values : Observable<[T]>,
-        loadState : Observable<PageLoadState>,
-        error : Observable<NetworkError>,
-        isMore : Observable<Bool>,
-        disposable : Disposable)
-where S : ObservableType,
-    N : ObservableType, P : ObservableConvertibleType,
-    O : ObservableType, O.E == NetworkResult<L>,
-    L : PageList, L.E == T {
-        
+public func pageNetwork<S,N,P,O,L,T,R>(
+    frist : S, next : N, params : P,
+    strategy : RequestStrategy = .latest,
+    request : @escaping (P.E, Int) throws -> O,
+    transform : @escaping (T) -> R
+) ->
+    (values : Observable<[R]>, loadState : Observable<PageLoadState>, error : Observable<NetworkError>, isMore : Observable<Bool>, disposable : Disposable)
+    where S : ObservableType, N : ObservableType, P : ObservableConvertibleType, O : ObservableType, O.E == NetworkResult<L>, L : PageList, L.E == T {
         var page = 1
         let loadState = PublishSubject<PageLoadState>()
         let error = PublishSubject<NetworkError>()
         let total = PublishSubject<Int>()
         /// 默认没有加载更多
         let isHasMore = BehaviorSubject<Bool>(value: false)
-        let values = PublishSubject<[T]>()
+        let values = PublishSubject<[R]>()
         
-        let fristResult = frist.do(onNext: { _ in loadState.onNext(.startRefresh) })
+        let fristResult = frist.do(onNext: { loadState.onNext(.startRefresh) })
             .withLatestFrom(params).map { ($0, 1) }
-            .flatMapLatest(request)
-            .do(onNext: { _ in
-                page = 1
-                loadState.onNext(.endRefresh)
-            })
+            .flatMap(strategy: strategy, for: request)
+            .do(onNext: { loadState.onNext(.endRefresh) })
             .mapSuccess { error.onNext($0) }
+            .do(onNext: { page = 1 })
             .shareOnce()
         
         let nextResult = next.pausable(isHasMore)
-            .do(onNext: { _ in loadState.onNext(.startLoadMore) })
+            .do(onNext: { loadState.onNext(.startLoadMore) })
             .withLatestFrom(params).map { ($0, page + 1) }
-            .flatMapLatest(request)
+            .flatMap(strategy: strategy, for: request)
+            .do(onNext: { loadState.onNext(.endLoadMore) })
             .mapSuccess { error.onNext($0) }
-            .do(onNext: { _ in
-                page += 1
-                loadState.onNext(.endLoadMore)
-            })
+            .do(onNext: { page += 1 })
             .shareOnce()
         
          let disposable1 = Observable.combineLatest(
-            total.asObservable(),
-            values.map({ $0.count }).asObservable())
+                total.asObservable(),
+                values.map({ $0.count }).asObservable()
+            )
             .map { $0 - $1 > 0 }
             .subscribe(onNext: { isHasMore.onNext($0) })
         
-        let disposable2 = Observable.merge(fristResult.map({ $0.total }),
-                                           nextResult.map({ $0.total }))
+        let disposable2 = Observable.merge(
+                fristResult.map({ $0.total }),
+                nextResult.map({ $0.total })
+            )
             .subscribe(onNext: { total.onNext($0) })
         
         let disposable3 = Observable.merge(
-            fristResult.map({ $0.items }),
-            nextResult.map({ $0.items }).withLatestFrom(values){ $1 + $0 })
+                fristResult.map({ $0.items }).distinctUntilChanged().mapMany(transform),
+                nextResult.map({ $0.items }).distinctUntilChanged().mapMany(transform)
+                    .withLatestFrom(values){ $1 + $0 }
+            )
             .subscribe(onNext: { values.onNext($0) })
         
         
-        return (values.asObservable().distinctUntilChanged(),
+        return (values.asObservable(),
                 loadState.asObservable(),
                 error.asObservable(),
                 isHasMore.asObservable(),

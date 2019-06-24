@@ -40,20 +40,3 @@ public extension TargetType {
     var sampleData: Data { return Data() }
 }
 
-/*
-extension TransformerFactory {
-    
-    static func forResponse() -> Transformer<Response> {
-        let toData: (Response) -> Data = { object in
-            return object.data
-        }
-        
-        let fromData: (Data) -> Response = { data in
-            return Response.init(statusCode: 200, data: data)
-        }
-        
-        return Transformer<Response>(toData: toData, fromData: fromData)
-    }
-    
-}
-*/

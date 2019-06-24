@@ -120,3 +120,8 @@ public enum NetworkCacheType : Int {
     }
 }
 
+/// 请求策略
+public enum RequestStrategy {
+    case first
+    case latest
+}

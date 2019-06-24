@@ -46,4 +46,33 @@ extension ObservableType {
             .map({ try? $0.get() }).filterNil()
     }
     
+    func `do`(onNext : @escaping () -> Void) -> Observable<E> {
+        return `do`(onNext: { _ in onNext() })
+    }
+    
+}
+
+// MARK: - 序列 Collection Map
+public extension ObservableType where E: Collection {
+    
+    /// 将序列中的数组map
+    func mapMany<T>(_ transform: @escaping (Self.E.Element) -> T) -> Observable<[T]> {
+        return self.map { collection -> [T] in
+            collection.map(transform)
+        }
+    }
+    
+}
+
+extension ObservableType {
+    /// 更具策略 flatMap
+    func flatMap<O>(strategy : RequestStrategy, for selector : @escaping (Self.E) throws -> O) -> Observable<O.E>
+        where O : ObservableType {
+        switch strategy {
+        case .first:
+            return flatMapFirst(selector)
+        case .latest:
+            return flatMapLatest(selector)
+        }
+    }
 }

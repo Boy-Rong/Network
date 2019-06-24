@@ -53,7 +53,7 @@ extension ObservableType {
 }
 
 // MARK: - 序列 Collection Map
-public extension ObservableType where E: Collection {
+extension ObservableType where E: Collection {
     
     /// 将序列中的数组map
     func mapMany<T>(_ transform: @escaping (Self.E.Element) -> T) -> Observable<[T]> {

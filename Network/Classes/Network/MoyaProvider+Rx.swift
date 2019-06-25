@@ -15,7 +15,7 @@ extension MoyaProvider: ReactiveCompatible {}
 // MARK: - 自己封装
 public extension Reactive where Base: MoyaProviderType {
     
-    /// 请求数据，带缓冲逻辑
+    /// 请求数据，带缓存逻辑
     func request(_ token : Base.Target) -> Observable<Response> {
         let network = requestNetwork(token).map { Optional($0) }.startWith(nil)
         let cache = requestCache(token).map { Optional($0) }.startWith(nil)
@@ -39,14 +39,7 @@ public extension Reactive where Base: MoyaProviderType {
         
         return request(token)
             .do(onNext: { handleCode(codeKey, response: $0) })
-            .flatMap({ response -> NetworkObservable<Void> in
-                return .just(
-                    transformSuccess(for: response,
-                                     codeKey: codeKey,
-                                     messageKey: messageKey,
-                                     successCode: successCode)
-                )
-            })
+            .map(codeKey, messageKey, successCode)
             .catchError({ .just(.failure(.network(value: $0))) })
     }
     
@@ -60,15 +53,7 @@ public extension Reactive where Base: MoyaProviderType {
 
             return request(token)
                 .do(onNext: { handleCode(codeKey, response: $0) })
-                .flatMap({ response -> NetworkObservable<T> in
-                    return .just(
-                        transformResult(for: response,
-                                        dataKey: dataKey,
-                                        codeKey: codeKey,
-                                        messageKey: messageKey,
-                                        successCode: successCode)
-                    )
-                })
+                .map(dataKey, codeKey, messageKey, successCode)
                 .catchError({ .just(.failure(.network(value: $0))) })
     }
 }
@@ -83,49 +68,6 @@ private func handleCode(_ codeKey : String, response : Response) {
     default: break
     }
 }
-
-private func transformResult<T>(
-    for response : Response,
-    dataKey : String,
-    codeKey : String,
-    messageKey : String,
-    successCode : Int
-    ) -> NetworkResult<T> where T : Codable {
-    
-    guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
-        let error = "服务器code解析错误\n\(String(data: response.data, encoding: .utf8) ?? "")"
-        return .failure(.error(value: error))
-    }
-    guard code == successCode else {
-        let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? "code不等于\(successCode)"
-        return .failure(.service(code: code, message: message))
-    }
-    guard let data = try? response.map(T.self, atKeyPath: dataKey) else {
-        return .failure(.error(value: "请求成功，但data解析错误"))
-    }
-    
-    return .success(data)
-}
-
-private func transformSuccess(
-    for response : Response,
-    codeKey : String,
-    messageKey : String,
-    successCode : Int
-    ) -> NetworkResult<Void> {
-    
-    guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
-        let error = "服务器code解析错误\n\(String(data: response.data, encoding: .utf8) ?? "")"
-        return .failure(.error(value: error))
-    }
-    guard code == successCode else {
-        let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? "code不等于\(successCode)"
-        return .failure(.service(code: code, message: message))
-    }
-    
-    return .success(())
-}
-
 
 extension Reactive where Base: MoyaProviderType {
     

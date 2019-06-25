@@ -84,11 +84,16 @@ where S : ObservableType,
 /// - Returns: values 最终结果，直接用就行 loadState 加载状态，result 组合后的数据， isMore：是否还有数据, disposable 内部绑定生命周期，可与外部调用者绑定
 public func pageNetwork<S,N,P,O,L,T,R>(
     frist : S, next : N, params : P,
-    strategy : RequestStrategy = .latest,
+    strategy : RequestStrategy = .first,
     request : @escaping (P.E, Int) throws -> O,
     transform : @escaping (T) -> R
-) ->
-    (values : Observable<[R]>, loadState : Observable<PageLoadState>, error : Observable<NetworkError>, isMore : Observable<Bool>, disposable : Disposable)
+) ->  (
+    values : Observable<[R]>,
+    loadState : Observable<PageLoadState>,
+    error : Observable<NetworkError>,
+    total : Observable<Int>,
+    disposable : Disposable
+    )
     where S : ObservableType, N : ObservableType, P : ObservableConvertibleType, O : ObservableType, O.E == NetworkResult<L>, L : PageList, L.E == T {
         var page = 1
         let loadState = PublishSubject<PageLoadState>()
@@ -115,30 +120,38 @@ public func pageNetwork<S,N,P,O,L,T,R>(
             .do(onNext: { page += 1 })
             .shareOnce()
         
-         let disposable1 = Observable.combineLatest(
+        let fristValues = fristResult.map({ $0.items })
+            .distinctUntilChanged().mapMany(transform)
+            .subscribeOn(transformScheduler)
+        
+        let nextValues = nextResult.map({ $0.items })
+            .distinctUntilChanged().mapMany(transform)
+            .withLatestFrom(values){ $1 + $0 }
+            .subscribeOn(transformScheduler)
+        
+        let disposable1 = Observable.merge(fristValues,nextValues)
+            .subscribe(onNext: { values.onNext($0) })
+        
+         let disposable2 = Observable.combineLatest(
                 total.asObservable(),
                 values.map({ $0.count }).asObservable()
             )
             .map { $0 - $1 > 0 }
             .subscribe(onNext: { isHasMore.onNext($0) })
         
-        let disposable2 = Observable.merge(
+        let disposable3 = Observable.merge(
                 fristResult.map({ $0.total }),
                 nextResult.map({ $0.total })
             )
             .subscribe(onNext: { total.onNext($0) })
         
-        let disposable3 = Observable.merge(
-                fristResult.map({ $0.items }).distinctUntilChanged().mapMany(transform),
-                nextResult.map({ $0.items }).distinctUntilChanged().mapMany(transform)
-                    .withLatestFrom(values){ $1 + $0 }
-            )
-            .subscribe(onNext: { values.onNext($0) })
-        
         
         return (values.asObservable(),
                 loadState.asObservable(),
                 error.asObservable(),
-                isHasMore.asObservable(),
+                total.asObservable(),
                 CompositeDisposable(disposables: [disposable1,disposable2,disposable3]))
 }
+
+/// 并发队列，用来处理异步任务的调度器
+private let transformScheduler = ConcurrentDispatchQueueScheduler(qos: .default)

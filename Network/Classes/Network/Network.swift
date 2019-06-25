@@ -84,7 +84,7 @@ where S : ObservableType,
 /// - Returns: values 最终结果，直接用就行 loadState 加载状态，result 组合后的数据， isMore：是否还有数据, disposable 内部绑定生命周期，可与外部调用者绑定
 public func pageNetwork<S,N,P,O,L,T,R>(
     frist : S, next : N, params : P,
-    strategy : RequestStrategy = .first,
+    strategy : RequestStrategy = .latest,
     request : @escaping (P.E, Int) throws -> O,
     transform : @escaping (T) -> R
 ) ->  (

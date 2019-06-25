@@ -63,16 +63,3 @@ extension ObservableType where E: Collection {
     }
     
 }
-
-extension ObservableType {
-    /// 更具策略 flatMap
-    func flatMap<O>(strategy : RequestStrategy, for selector : @escaping (Self.E) throws -> O) -> Observable<O.E>
-        where O : ObservableType {
-        switch strategy {
-        case .first:
-            return flatMapFirst(selector)
-        case .latest:
-            return flatMapLatest(selector)
-        }
-    }
-}

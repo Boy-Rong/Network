@@ -119,9 +119,3 @@ public enum NetworkCacheType : Int {
         return "Cache.error.cacheRequest"
     }
 }
-
-/// 请求策略
-public enum RequestStrategy {
-    case first
-    case latest
-}

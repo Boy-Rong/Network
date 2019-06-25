@@ -118,13 +118,15 @@ public func pageNetwork<S,N,P,O,L,T,R>(
             .shareOnce()
         
         let fristValues = fristResult.map({ $0.items })
-            .distinctUntilChanged().mapMany(transform)
-            .subscribeOn(transformScheduler)
+            .distinctUntilChanged()
+            .observeOn(transformScheduler)
+            .mapMany(transform)
         
         let nextValues = nextResult.map({ $0.items })
-            .distinctUntilChanged().mapMany(transform)
-            .withLatestFrom(values){ $1 + $0 }
-            .subscribeOn(transformScheduler)
+            .distinctUntilChanged()
+            .observeOn(transformScheduler)
+            .mapMany(transform)
+            .withLatestFrom(values) { $1 + $0 }
         
         let disposable1 = Observable.merge(fristValues,nextValues)
             .subscribe(onNext: { values.onNext($0) })

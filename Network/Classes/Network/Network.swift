@@ -26,9 +26,9 @@ where S : ObservableType,
         let isLoading = PublishSubject<Bool>()
         let error = PublishSubject<NetworkError>()
         let result = start
-            .do(onNext: { _ in isLoading.onNext(true) })
+            .do(onNext: { isLoading.onNext(true) })
             .flatMapLatest(request)
-            .do(onNext: { _ in isLoading.onNext(false) })
+            .do(onNext: { isLoading.onNext(false) })
             .mapSuccess { error.onNext($0) }
             .shareOnce()
         
@@ -58,10 +58,10 @@ where S : ObservableType,
         let isLoading = PublishSubject<Bool>()
         let error = PublishSubject<NetworkError>()
         let result = start
-            .do(onNext: { _ in isLoading.onNext(true) })
+            .do(onNext: { isLoading.onNext(true) })
             .withLatestFrom(params)
             .flatMapLatest(request)
-            .do(onNext: { _ in isLoading.onNext(false) })
+            .do(onNext: { isLoading.onNext(false) })
             .mapSuccess { error.onNext($0) }
             .shareOnce()
         

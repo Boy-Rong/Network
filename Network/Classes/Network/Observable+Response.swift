@@ -21,11 +21,12 @@ extension ObservableType where E == Response {
                 let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? "code不等于\(successCode)"
                 return .failure(.service(code: code, message: message))
             }
-            guard let data = try? response.map(T.self, atKeyPath: dataKey) else {
-                return .failure(.error(value: "请求成功，但data解析错误"))
+            do {
+                let data = try response.map(T.self, atKeyPath: dataKey)
+                return .success(data)
+            } catch let error {
+                return .failure(.error(value: "请求成功，但data解析错误\nerror: \(error)"))
             }
-            
-            return .success(data)
         })
     }
     

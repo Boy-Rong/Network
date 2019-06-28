@@ -70,6 +70,80 @@ where S : ObservableType,
                 error.asObservable())
 }
 
+/// 分页网络请求通用方法, 忽略重复的结果
+///
+/// - Parameters:
+///   - frist: 上拉序列
+///   - next: 下拉序列
+///   - params: 参数序列，不包含page
+///   - selector: 请求方法，需要传page
+///
+/// - Returns: values 最终结果，直接用就行 loadState 加载状态，result 组合后的数据， total：数据总数, disposable 内部绑定生命周期，可与外部调用者绑定
+public func pageNetwork<S,N,P,O,L,T>(frist : S, next : N, params : P, request : @escaping (P.E, Int) throws -> O)
+    -> (
+    values : Observable<[T]>,
+    loadState : Observable<PageLoadState>,
+    error : Observable<NetworkError>,
+    total : Observable<Int>,
+    disposable : Disposable
+    )
+    where S : ObservableType, N : ObservableType, P : ObservableConvertibleType, O : ObservableType, O.E == NetworkResult<L>, L : PageList, L.E == T {
+        var page = 1
+        let loadState = PublishSubject<PageLoadState>()
+        let error = PublishSubject<NetworkError>()
+        let total = PublishSubject<Int>()
+        /// 默认没有加载更多
+        let isHasMore = BehaviorSubject<Bool>(value: false)
+        let values = PublishSubject<[T]>()
+        
+        let fristResult = frist
+            .do(onNext: { loadState.onNext(.startRefresh) })
+            .withLatestFrom(params).map { ($0, 1) }
+            .flatMapLatest(request)
+            .do(onNext: { loadState.onNext(.endRefresh) })
+            .mapSuccess { error.onNext($0) }
+            .do(onNext: { page = 1 })
+            .shareOnce()
+        
+        let nextResult = next.pausable(isHasMore)
+            .do(onNext: { loadState.onNext(.startLoadMore) })
+            .withLatestFrom(params).map { ($0, page + 1) }
+            .flatMapLatest(request)
+            .do(onNext: { loadState.onNext(.endLoadMore) })
+            .mapSuccess { error.onNext($0) }
+            .do(onNext: { page += 1 })
+            .shareOnce()
+        
+        let fristValues = fristResult.map({ $0.items })
+            .distinctUntilChanged()
+        
+        let nextValues = nextResult.map({ $0.items })
+            .distinctUntilChanged()
+            .withLatestFrom(values) { $1 + $0 }
+        
+        let disposable1 = Observable.merge(fristValues,nextValues)
+            .subscribe(onNext: { values.onNext($0) })
+        
+        let disposable2 = Observable.combineLatest(
+            total.asObservable(),
+            values.map({ $0.count }).asObservable()
+            )
+            .map { $0 - $1 > 0 }
+            .subscribe(onNext: { isHasMore.onNext($0) })
+        
+        let disposable3 = Observable.merge(
+            fristResult.map({ $0.total }),
+            nextResult.map({ $0.total })
+            )
+            .subscribe(onNext: { total.onNext($0) })
+        
+        
+        return (values.asObservable(),
+                loadState.asObservable(),
+                error.asObservable(),
+                total.asObservable(),
+                CompositeDisposable(disposables: [disposable1,disposable2,disposable3]))
+}
 
 /// 分页网络请求通用方法, 忽略重复的结果
 ///
@@ -80,11 +154,9 @@ where S : ObservableType,
 ///   - selector: 请求方法，需要传page
 ///
 /// - Returns: values 最终结果，直接用就行 loadState 加载状态，result 组合后的数据， total：数据总数, disposable 内部绑定生命周期，可与外部调用者绑定
-public func pageNetwork<S,N,P,O,L,T,R>(
-    frist : S, next : N, params : P,
-    request : @escaping (P.E, Int) throws -> O,
-    transform : @escaping (T) -> R
-) ->  (
+public func pageNetwork<S,N,P,O,L,T,R>(frist : S, next : N, params : P, request : @escaping (P.E, Int) throws -> O, transform : @escaping (T) -> R)
+    ->
+    (
     values : Observable<[R]>,
     loadState : Observable<PageLoadState>,
     error : Observable<NetworkError>,

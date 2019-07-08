@@ -75,11 +75,11 @@ where S : ObservableType,
 /// - Parameters:
 ///   - frist: 上拉序列
 ///   - next: 下拉序列
-///   - params: 参数序列，不包含page
-///   - selector: 请求方法，需要传page
+///   - params: 生成参数序列，闭包参数为分页数
+///   - selector: 请求方法，不需要传page
 ///
 /// - Returns: values 最终结果，直接用就行 loadState 加载状态，result 组合后的数据， total：数据总数, disposable 内部绑定生命周期，可与外部调用者绑定
-public func pageNetwork<S,N,P,O,L,T>(frist : S, next : N, params : P, request : @escaping (P.E, Int) throws -> O)
+public func pageNetwork<S,N,P,O,L,T>(frist : S, next : N, params : (Int) -> P, request : @escaping (P.E) throws -> O)
     -> (
     values : Observable<[T]>,
     loadState : Observable<PageLoadState>,
@@ -98,7 +98,7 @@ public func pageNetwork<S,N,P,O,L,T>(frist : S, next : N, params : P, request : 
         
         let fristResult = frist
             .do(onNext: { loadState.onNext(.startRefresh) })
-            .withLatestFrom(params).map { ($0, 1) }
+            .withLatestFrom(params(1))
             .flatMapLatest(request)
             .do(onNext: { loadState.onNext(.endRefresh) })
             .mapSuccess { error.onNext($0) }
@@ -107,7 +107,7 @@ public func pageNetwork<S,N,P,O,L,T>(frist : S, next : N, params : P, request : 
         
         let nextResult = next.pausable(isHasMore)
             .do(onNext: { loadState.onNext(.startLoadMore) })
-            .withLatestFrom(params).map { ($0, page + 1) }
+            .withLatestFrom(params(page + 1))
             .flatMapLatest(request)
             .do(onNext: { loadState.onNext(.endLoadMore) })
             .mapSuccess { error.onNext($0) }
@@ -150,11 +150,11 @@ public func pageNetwork<S,N,P,O,L,T>(frist : S, next : N, params : P, request : 
 /// - Parameters:
 ///   - frist: 上拉序列
 ///   - next: 下拉序列
-///   - params: 参数序列，不包含page
-///   - selector: 请求方法，需要传page
+///   - params: 生成参数序列，闭包参数为分页数
+///   - selector: 请求方法，不需要传page
 ///
 /// - Returns: values 最终结果，直接用就行 loadState 加载状态，result 组合后的数据， total：数据总数, disposable 内部绑定生命周期，可与外部调用者绑定
-public func pageNetwork<S,N,P,O,L,T,R>(frist : S, next : N, params : P, request : @escaping (P.E, Int) throws -> O, transform : @escaping (T) -> R)
+public func pageNetwork<S,N,P,O,L,T,R>(frist : S, next : N, params : (Int) -> P, request : @escaping (P.E) throws -> O, transform : @escaping (T) -> R)
     ->
     (
     values : Observable<[R]>,
@@ -173,7 +173,7 @@ public func pageNetwork<S,N,P,O,L,T,R>(frist : S, next : N, params : P, request 
         let values = PublishSubject<[R]>()
         
         let fristResult = frist.do(onNext: { loadState.onNext(.startRefresh) })
-            .withLatestFrom(params).map { ($0, 1) }
+            .withLatestFrom(params(1))
             .flatMapLatest(request)
             .do(onNext: { loadState.onNext(.endRefresh) })
             .mapSuccess { error.onNext($0) }
@@ -182,7 +182,7 @@ public func pageNetwork<S,N,P,O,L,T,R>(frist : S, next : N, params : P, request 
         
         let nextResult = next.pausable(isHasMore)
             .do(onNext: { loadState.onNext(.startLoadMore) })
-            .withLatestFrom(params).map { ($0, page + 1) }
+            .withLatestFrom(params(page + 1))
             .flatMapLatest(request)
             .do(onNext: { loadState.onNext(.endLoadMore) })
             .mapSuccess { error.onNext($0) }

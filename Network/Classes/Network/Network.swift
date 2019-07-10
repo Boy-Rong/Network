@@ -79,70 +79,59 @@ where S : ObservableType,
 ///   - selector: 请求方法，不需要传page
 ///
 /// - Returns: values 最终结果，直接用就行 loadState 加载状态，result 组合后的数据， total：数据总数, disposable 内部绑定生命周期，可与外部调用者绑定
-public func pageNetwork<S,N,P,O,L,T>(frist : S, next : N, params : @escaping (Int) -> P, request : @escaping (P.E) throws -> O)
+public func pageNetwork<S,N,P,O,L,T>(frist : S, next : N, params : P, request : @escaping (P.E,Int) throws -> O)
     -> (
     values : Observable<[T]>,
     loadState : Observable<PageLoadState>,
     error : Observable<NetworkError>,
-    total : Observable<Int>,
-    disposable : Disposable
+    total : Observable<Int>
     )
     where S : ObservableType, N : ObservableType, P : ObservableConvertibleType, O : ObservableType, O.E == NetworkResult<L>, L : PageList, L.E == T {
         var page = 1
         let loadState = PublishSubject<PageLoadState>()
         let error = PublishSubject<NetworkError>()
-        let total = PublishSubject<Int>()
-        /// 默认没有加载更多
-        let isHasMore = BehaviorSubject<Bool>(value: false)
-        let values = PublishSubject<[T]>()
+        let isNotLoading = loadState.map { !$0.isLoading }
         
         let fristResult = frist
-            .do(onNext: { loadState.onNext(.startRefresh) })
-            .flatMap({_ in params(1) })
+            .pausable(isNotLoading)  // 加载中不能请求
+            .do(onNext: { loadState.onNext(.refreshing) })
+            .withLatestFrom(params, resultSelector: { ($1, 1) })
             .flatMapLatest(request)
-            .do(onNext: { loadState.onNext(.endRefresh) })
+            .do(onNext: { loadState.onNext(.none) })
             .mapSuccess { error.onNext($0) }
             .do(onNext: { page = 1 })
             .shareOnce()
         
-        let nextResult = next.pausable(isHasMore)
-            .do(onNext: { loadState.onNext(.startLoadMore) })
-            .flatMap({_ in params(page + 1) })
+        let nextResult = next
+            .skipUntil(frist)  // 第一页没请求时不能请求
+            .pausable(isNotLoading)  // 加载中不能请求
+            .do(onNext: { loadState.onNext(.loadMoreing) })
+            .withLatestFrom(params, resultSelector: { ($1, page + 1) })
             .flatMapLatest(request)
-            .do(onNext: { loadState.onNext(.endLoadMore) })
+            .do(onNext: { loadState.onNext(.none) })
             .mapSuccess { error.onNext($0) }
             .do(onNext: { page += 1 })
             .shareOnce()
         
-        let fristValues = fristResult.map({ $0.items })
-            .distinctUntilChanged()
+        let fristValues = fristResult.map({ $0.items }).distinctUntilChanged()
+
+        let nextValues = nextResult.map({ $0.items }).distinctUntilChanged()
+            .scan([], accumulator: { $0 + $1 }) // 将加载更多的数据全部加起来
+            .withLatestFrom(fristValues, resultSelector: { $1 + $0 })   // 将第一次的结果放在最前面
         
-        let nextValues = nextResult.map({ $0.items })
-            .distinctUntilChanged()
-            .withLatestFrom(values) { $1 + $0 }
+        let values = Observable.merge(fristValues, nextValues)
         
-        let disposable1 = Observable.merge(fristValues,nextValues)
-            .subscribe(onNext: { values.onNext($0) })
-        
-        let disposable2 = Observable.combineLatest(
-            total.asObservable(),
-            values.map({ $0.count }).asObservable()
-            )
-            .map { $0 - $1 > 0 }
-            .subscribe(onNext: { isHasMore.onNext($0) })
-        
-        let disposable3 = Observable.merge(
+        let total = Observable.merge(
             fristResult.map({ $0.total }),
             nextResult.map({ $0.total })
-            )
-            .subscribe(onNext: { total.onNext($0) })
+        )
         
-        
-        return (values.asObservable(),
-                loadState.asObservable(),
-                error.asObservable(),
-                total.asObservable(),
-                CompositeDisposable(disposables: [disposable1,disposable2,disposable3]))
+        return (
+            values.asObservable(),
+            loadState.asObservable(),
+            error.asObservable(),
+            total.asObservable()
+        )
 }
 
 /// 分页网络请求通用方法, 忽略重复的结果
@@ -154,74 +143,67 @@ public func pageNetwork<S,N,P,O,L,T>(frist : S, next : N, params : @escaping (In
 ///   - selector: 请求方法，不需要传page
 ///
 /// - Returns: values 最终结果，直接用就行 loadState 加载状态，result 组合后的数据， total：数据总数, disposable 内部绑定生命周期，可与外部调用者绑定
-public func pageNetwork<S,N,P,O,L,T,R>(frist : S, next : N, params : @escaping (Int) -> P, request : @escaping (P.E) throws -> O, transform : @escaping (T) -> R)
+public func pageNetwork<S,N,P,O,L,T,R>(frist : S, next : N, params : P, request : @escaping (P.E,Int) throws -> O, transform : @escaping (T) -> R)
     ->
     (
     values : Observable<[R]>,
     loadState : Observable<PageLoadState>,
     error : Observable<NetworkError>,
-    total : Observable<Int>,
-    disposable : Disposable
+    total : Observable<Int>
     )
     where S : ObservableType, N : ObservableType, P : ObservableConvertibleType, O : ObservableType, O.E == NetworkResult<L>, L : PageList, L.E == T {
         var page = 1
         let loadState = PublishSubject<PageLoadState>()
         let error = PublishSubject<NetworkError>()
-        let total = PublishSubject<Int>()
-        /// 默认没有加载更多
-        let isHasMore = BehaviorSubject<Bool>(value: false)
-        let values = PublishSubject<[R]>()
+        let isNotLoading = loadState.map { !$0.isLoading }
         
-        let fristResult = frist.do(onNext: { loadState.onNext(.startRefresh) })
-            .flatMap({_ in params(1) })
+        let fristResult = frist
+            .pausable(isNotLoading)  // 加载中不能请求
+            .do(onNext: { loadState.onNext(.refreshing) })
+            .withLatestFrom(params, resultSelector: { ($1, 1) })
             .flatMapLatest(request)
-            .do(onNext: { loadState.onNext(.endRefresh) })
+            .do(onNext: { loadState.onNext(.none) })
             .mapSuccess { error.onNext($0) }
             .do(onNext: { page = 1 })
             .shareOnce()
         
-        let nextResult = next.pausable(isHasMore)
-            .do(onNext: { loadState.onNext(.startLoadMore) })
-            .flatMap({_ in params(page + 1) })
+        let nextResult = next
+            .skipUntil(frist)  // 第一页没请求时不能请求
+            .pausable(isNotLoading)  // 加载中不能请求
+            .do(onNext: { loadState.onNext(.loadMoreing) })
+            .withLatestFrom(params, resultSelector: { ($1, page + 1) })
             .flatMapLatest(request)
-            .do(onNext: { loadState.onNext(.endLoadMore) })
+            .do(onNext: { loadState.onNext(.none) })
             .mapSuccess { error.onNext($0) }
             .do(onNext: { page += 1 })
             .shareOnce()
         
-        let fristValues = fristResult.map({ $0.items })
-            .distinctUntilChanged()
+        let fristValues = fristResult.map({ $0.items }).distinctUntilChanged()
             .observeOn(transformScheduler)
             .mapMany(transform)
         
-        let nextValues = nextResult.map({ $0.items })
-            .distinctUntilChanged()
+        let nextValues = nextResult.map({ $0.items }).distinctUntilChanged()
             .observeOn(transformScheduler)
             .mapMany(transform)
-            .withLatestFrom(values) { $1 + $0 }
+            .scan([], accumulator: { $0 + $1 }) // 将加载更多的数据全部加起来
+            .withLatestFrom(fristValues, resultSelector: { $1 + $0 })   // 将第一次的结果放在最前面
         
-        let disposable1 = Observable.merge(fristValues,nextValues)
-            .subscribe(onNext: { values.onNext($0) })
+        let values = Observable.merge(
+            fristValues,
+            nextValues
+        )
         
-         let disposable2 = Observable.combineLatest(
-                total.asObservable(),
-                values.map({ $0.count }).asObservable()
-            )
-            .map { $0 - $1 > 0 }
-            .subscribe(onNext: { isHasMore.onNext($0) })
+        let total = Observable.merge(
+            fristResult.map({ $0.total }),
+            nextResult.map({ $0.total })
+        )
         
-        let disposable3 = Observable.merge(
-                fristResult.map({ $0.total }),
-                nextResult.map({ $0.total })
-            )
-            .subscribe(onNext: { total.onNext($0) })
-        
-        
-        return (values.asObservable(),
-                loadState.asObservable(),
-                error.asObservable(),
-                total.asObservable(),
-                CompositeDisposable(disposables: [disposable1,disposable2,disposable3]))
+        return (
+            values.asObservable(),
+            loadState.asObservable(),
+            error.asObservable(),
+            total.asObservable()
+        )
 }
 
 /// 并发队列，用来处理异步任务的调度器

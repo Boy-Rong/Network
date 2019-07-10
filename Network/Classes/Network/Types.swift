@@ -76,20 +76,18 @@ public protocol PageList : Codable & Equatable {
 
 /// 分页加载状态
 public enum PageLoadState : String {
-    /// 开始刷新
-    case startRefresh
-    /// 结束刷新
-    case endRefresh
-    /// 开始上拉加载
-    case startLoadMore
-    /// 结束上拉加载
-    case endLoadMore
+    /// 下拉刷新中
+    case refreshing
+    /// 上拉加载中
+    case loadMoreing
+    /// 静止状态
+    case none
     
     public var isLoading : Bool {
         switch self {
-        case .startRefresh, .startLoadMore:
+        case .refreshing, .loadMoreing:
             return true
-        case .endRefresh, .endLoadMore:
+        case .none:
             return false
         }
     }

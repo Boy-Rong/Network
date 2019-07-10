@@ -18,6 +18,7 @@ extension ObservableType where E == Response {
                 return .failure(.error(value: error))
             }
             guard code == successCode else {
+                handleServiceCode(code)
                 let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? "code不等于\(successCode)"
                 return .failure(.service(code: code, message: message))
             }
@@ -38,12 +39,23 @@ extension ObservableType where E == Response {
                 return .failure(.error(value: error))
             }
             guard code == successCode else {
+                handleServiceCode(code)
                 let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? "code不等于\(successCode)"
                 return .failure(.service(code: code, message: message))
             }
             
             return .success(())
         })
+    }
+}
+
+/// 处理服务器Code
+private func handleServiceCode(_ code: Int) {
+    switch code {
+    case 401:
+        NotificationCenter.default.post(name: .networkService_401, object: nil)
+        
+    default: break
     }
 }
 

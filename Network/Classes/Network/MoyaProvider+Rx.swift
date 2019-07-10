@@ -38,7 +38,6 @@ public extension Reactive where Base: MoyaProviderType {
         ) -> NetworkObservable<Void> {
         
         return request(token)
-            .do(onNext: { handleCode(codeKey, response: $0) })
             .map(codeKey, messageKey, successCode)
             .catchError({ .just(.failure(.network(value: $0))) })
     }
@@ -52,20 +51,8 @@ public extension Reactive where Base: MoyaProviderType {
         ) -> NetworkObservable<T> where T : Codable {
 
             return request(token)
-                .do(onNext: { handleCode(codeKey, response: $0) })
                 .map(dataKey, codeKey, messageKey, successCode)
                 .catchError({ .just(.failure(.network(value: $0))) })
-    }
-}
-
-/// 处理服务器Code
-private func handleCode(_ codeKey : String, response : Response) {
-    guard let code = try? response.map(Int.self, atKeyPath: codeKey) else { return }
-    switch code {
-    case 401:
-        NotificationCenter.default.post(name: .networkService_401, object: nil)
-        
-    default: break
     }
 }
 

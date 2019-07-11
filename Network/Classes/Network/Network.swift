@@ -90,10 +90,11 @@ public func pageNetwork<S,N,P,O,L,T>(frist : S, next : N, params : P, request : 
         var page = 1
         let loadState = PublishSubject<PageLoadState>()
         let error = PublishSubject<NetworkError>()
-        let isNotLoading = loadState.map { !$0.isLoading }
+        let isHasLoadMore = loadState.map({ $0 == .refreshing }).map { !$0 }
+        let isHasRefresh = loadState.map({ $0 == .loadMoreing }).map { !$0 }
         
         let fristResult = frist
-            .pausable(isNotLoading)  // 加载中不能请求
+            .pausable(isHasRefresh.startWith(true))  // 加载更多中不能请求
             .do(onNext: { loadState.onNext(.refreshing) })
             .withLatestFrom(params, resultSelector: { ($1, 1) })
             .flatMapLatest(request)
@@ -103,8 +104,8 @@ public func pageNetwork<S,N,P,O,L,T>(frist : S, next : N, params : P, request : 
             .shareOnce()
         
         let nextResult = next
-            .skipUntil(frist)  // 第一页没请求时不能请求
-            .pausable(isNotLoading)  // 加载中不能请求
+            .skipUntil(fristResult.filter({ !($0.items.isEmpty) }))  // 第一页没数据时不能请求
+            .pausable(isHasLoadMore)  // 下拉刷新中不能请求
             .do(onNext: { loadState.onNext(.loadMoreing) })
             .withLatestFrom(params, resultSelector: { ($1, page + 1) })
             .flatMapLatest(request)
@@ -155,10 +156,11 @@ public func pageNetwork<S,N,P,O,L,T,R>(frist : S, next : N, params : P, request 
         var page = 1
         let loadState = PublishSubject<PageLoadState>()
         let error = PublishSubject<NetworkError>()
-        let isNotLoading = loadState.map { !$0.isLoading }
+        let isHasLoadMore = loadState.map({ $0 == .refreshing }).map { !$0 }
+        let isHasRefresh = loadState.map({ $0 == .loadMoreing }).map { !$0 }
         
         let fristResult = frist
-            .pausable(isNotLoading)  // 加载中不能请求
+            .pausable(isHasRefresh.startWith(true))  // 加载更多中不能请求
             .do(onNext: { loadState.onNext(.refreshing) })
             .withLatestFrom(params, resultSelector: { ($1, 1) })
             .flatMapLatest(request)
@@ -168,8 +170,8 @@ public func pageNetwork<S,N,P,O,L,T,R>(frist : S, next : N, params : P, request 
             .shareOnce()
         
         let nextResult = next
-            .skipUntil(frist)  // 第一页没请求时不能请求
-            .pausable(isNotLoading)  // 加载中不能请求
+            .skipUntil(fristResult.filter({ !($0.items.isEmpty) }))  // 第一页没数据时不能请求
+            .pausable(isHasLoadMore)  // 下拉刷新中不能请求
             .do(onNext: { loadState.onNext(.loadMoreing) })
             .withLatestFrom(params, resultSelector: { ($1, page + 1) })
             .flatMapLatest(request)

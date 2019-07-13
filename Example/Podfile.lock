@@ -5,11 +5,14 @@ PODS:
   - Moya/Core (13.0.1):
     - Alamofire (~> 4.1)
     - Result (~> 4.1)
-  - Network.swift (0.4.0):
+  - Network.swift (0.7.5):
     - Moya (~> 13.0)
     - RxSwift (~> 5.0)
+    - RxSwiftExtensions.swift (~> 0.2)
   - Result (4.1.0)
   - RxSwift (5.0.0)
+  - RxSwiftExtensions.swift (0.2.3):
+    - RxSwift (~> 5.0)
 
 DEPENDENCIES:
   - Network.swift (from `../`)
@@ -20,6 +23,7 @@ SPEC REPOS:
     - Moya
     - Result
     - RxSwift
+    - RxSwiftExtensions.swift
 
 EXTERNAL SOURCES:
   Network.swift:
@@ -28,10 +32,11 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Alamofire: ae5c501addb7afdbb13687d7f2f722c78734c2d3
   Moya: f4a4b80ff2f8a4ffc208dfb31cd91636622fee6e
-  Network.swift: 05750d3f4687f519c71f8d9572318b5cec128c49
+  Network.swift: 93a56afff15c680c84fe20e57a4805be9b06ff9b
   Result: bd966fac789cc6c1563440b348ab2598cc24d5c7
   RxSwift: 8b0671caa829a763bbce7271095859121cbd895f
+  RxSwiftExtensions.swift: 7f955609c3d3e03bd9f731fc89b9725d711c5b3e
 
 PODFILE CHECKSUM: 46cedb2e0fda0c68bff76ee268c81d537ed747f6
 
-COCOAPODS: 1.6.0
+COCOAPODS: 1.6.2

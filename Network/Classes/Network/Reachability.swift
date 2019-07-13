@@ -23,15 +23,15 @@ public struct ReachabilityService {
     
     /// 当前网路状态
     var currentStatus : ReachabilityStatus {
-        return reachability?.networkReachabilityStatus ?? .notReachable
+        return reachability?.networkReachabilityStatus ?? .unknown
     }
     
-    /// 是否有网
+    /// 是否有网，默认有网
     var isHasNetwork : Bool {
-        return reachability?.isReachable ?? false
+        return reachability?.isReachable ?? true
     }
     
-    private let currentSubject = BehaviorSubject<ReachabilityStatus>(value: .notReachable)
+    private let currentSubject = BehaviorSubject<ReachabilityStatus>(value: .unknown)
     
     /// 当前网络状态序列
     var current : Observable<ReachabilityStatus> {
@@ -56,6 +56,10 @@ public struct ReachabilityService {
         reachability?.stopListening()
     }
     
+    /// 开始监听
+    func start() {
+        reachability?.startListening()
+    }
     
 }
 

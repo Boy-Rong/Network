@@ -32,27 +32,61 @@ public extension Reactive where Base: MoyaProviderType {
     
     /// 请求成功
     func request(_ token : Base.Target,
-                 codeKey : String = NetworkResultKey.code,
-                 messageKey : String = NetworkResultKey.message,
-                 successCode : Int = NetworkResultKey.success
-        ) -> NetworkObservable<Void> {
+                 codeKey : String = NetworkConfigure.code,
+                 messageKey : String = NetworkConfigure.message,
+                 successCode : Int = NetworkConfigure.success
+        ) -> Observable<Void> {
         
-        return request(token)
-            .map(codeKey, messageKey, successCode)
-            .catchError({ .just(.failure(.network(value: $0))) })
+        return request(token).flatMap({ response -> Observable<Void> in
+            guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
+                let error = "服务器code解析错误\n\(String(data: response.data, encoding: .utf8) ?? "")"
+                return .error(NetworkError.error(value: error))
+            }
+            guard code == successCode else {
+                handleServiceCode(code)
+                let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? "code不等于\(successCode)"
+                return .error(NetworkError.service(code: code, message: message))
+            }
+            
+            return .just(())
+        })
     }
     
     /// 请求成功的结果数据
     func request<T>(_ token : Base.Target,
-                    dataKey : String = NetworkResultKey.data,
-                    codeKey : String = NetworkResultKey.code,
-                    messageKey : String = NetworkResultKey.message,
-                    successCode : Int = NetworkResultKey.success
-        ) -> NetworkObservable<T> where T : Codable {
+                    dataKey : String = NetworkConfigure.data,
+                    codeKey : String = NetworkConfigure.code,
+                    messageKey : String = NetworkConfigure.message,
+                    successCode : Int = NetworkConfigure.success
+        ) -> Observable<T> where T : Codable {
 
-            return request(token)
-                .map(dataKey, codeKey, messageKey, successCode)
-                .catchError({ .just(.failure(.network(value: $0))) })
+        return request(token).flatMap({ response -> Observable<T> in
+            guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
+                let error = "服务器code解析错误\n\(String(data: response.data, encoding: .utf8) ?? "")"
+                return .error(NetworkError.error(value: error))
+            }
+            guard code == successCode else {
+                handleServiceCode(code)
+                let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? "code不等于\(successCode)"
+                return .error(NetworkError.service(code: code, message: message))
+            }
+            do {
+                let data = try response.map(T.self, atKeyPath: dataKey)
+                return .just(data)
+            } catch let error {
+                return .error(NetworkError.error(value: "请求成功，但data解析错误\nerror: \(error)"))
+            }
+        })
+    }
+}
+
+/// 处理服务器Code
+private func handleServiceCode(_ code: Int) {
+    switch code {
+    case 401:
+        NotificationCenter.default.post(name: .networkService_401, object: nil)
+        
+    default: break
     }
 }
 
@@ -77,18 +111,20 @@ extension Reactive where Base: MoyaProviderType {
             })
     }
     
+    /// 请求缓存，若不是缓存或者没有缓存，直接返回完成事件
     func requestCache(_ token : Base.Target) -> Observable<Response> {
-        let disposable = Disposables.create()
+        guard let token = token as? CacheType,
+            token.cache == .cacheResponse else {
+                return .empty()
+        }
         
         return Observable<Response>.create { observer in
-            guard let token = token as? CacheType,
-                token.cache == .cacheResponse,
-                let response = try? token.getResponse() else { return disposable }
-            
-            observer.onNext(response)
+            if let response = try? token.getResponse() {
+                observer.onNext(response)
+            }
             observer.onCompleted()
             
-            return disposable
+            return Disposables.create()
         }
     }
     

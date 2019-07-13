@@ -21,18 +21,15 @@ public protocol CacheType where Self : TargetType {
     func cacheRequest()
 }
 public extension CacheType {
-    var cachedKey: String {
-        return "\(baseURL.absoluteString)\(path),\(method.rawValue),\(headers ?? [:]),\(task)"
-    }
+    
+    func cacheRequest() { }
+    
     /// 对应的请求
     var request : URLRequest? {
         return try? MoyaProvider.defaultEndpointMapping(for: self).urlRequest()
     }
 }
 
-public extension CacheType {
-    func cacheRequest() { }
-}
 
 // MARK: - 扩展 TargetType 加入缓存属性
 public extension TargetType {

@@ -26,9 +26,9 @@ import Alamofire
 //public typealias PropertyListEncoding = Alamofire.PropertyListEncoding
 
 /// 网路结果类型
-public typealias NetworkResult<T> = Swift.Result<T,NetworkError>
-/// 网路结果序列
-public typealias NetworkObservable<T> = Observable<NetworkResult<T>>
+//public typealias NetworkResult<T> = Swift.Result<T,NetworkError>
+///// 网路结果序列
+//public typealias NetworkObservable<T> = Observable<NetworkResult<T>>
 
 //public typealias NetworkVoid = Swift.Result<Void,NetworkError>
 //public typealias NetworkVoidObservable = Observable<NetworkVoid>
@@ -37,7 +37,7 @@ public typealias NetworkObservable<T> = Observable<NetworkResult<T>>
 public typealias ReachabilityStatus = Alamofire.NetworkReachabilityManager.NetworkReachabilityStatus
 
 /// 网络请求Key值, 外部可根据实际需求更改值
-public struct NetworkResultKey {
+public struct NetworkConfigure {
     public private(set) static var code = "code"
     public private(set) static var message = "msg"
     public private(set) static var data = "data"
@@ -45,10 +45,10 @@ public struct NetworkResultKey {
     
     /// 替换默认的网络请求Key
     public static func replace(
-        codeKey : String = NetworkResultKey.code,
-        messageKey : String = NetworkResultKey.message,
-        dataKey : String = NetworkResultKey.data,
-        successKey : Int = NetworkResultKey.success) {
+        codeKey : String = NetworkConfigure.code,
+        messageKey : String = NetworkConfigure.message,
+        dataKey : String = NetworkConfigure.data,
+        successKey : Int = NetworkConfigure.success) {
         self.code = codeKey
         self.message = messageKey
         self.data = dataKey
@@ -105,8 +105,6 @@ public enum NetworkError : Error {
 
 /// 缓存类型
 public enum NetworkCacheType : Int {
-    /// 不缓存
-    case none
     /// 缓存成功结果
     case cacheResponse
     /// 缓存失败任务

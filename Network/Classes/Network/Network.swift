@@ -33,8 +33,8 @@ public func network<RequestParams,Result>(
         )
 }
 
-public func network<RequestParams,Result>(
-    start: Observable<Void>,
+public func network<Start: ObservableType,RequestParams,Result>(
+    start: Start,
     params: Observable<RequestParams>,
     request: @escaping (RequestParams) -> Observable<Result>)
     -> (result: Observable<Result>,
@@ -67,9 +67,9 @@ public func network<RequestParams,Result>(
 ///   - requestFromParams: 请求方法
 ///   - valuesFromResult: 将结结果转换成需要的值，在异步中执行
 ///   - totalFormResult: 获取数据总量
-public func page<RequestParams,Result: Equatable,Value>(
+public func page<RequestParams, Next: ObservableType,  Result: Equatable, Value>(
     requestFirstPageWith requestFirstPage: Observable<RequestParams>,
-    requestNextPageWhen requestNextPage: Observable<Void>,
+    requestNextPageWhen requestNextPage: Next,
     requestFromParams: @escaping (RequestParams,Int) -> Observable<Result>,
     valuesFromResult: @escaping (Result) -> ([Value]),
     totalFormResult: @escaping (Result) -> (Int))

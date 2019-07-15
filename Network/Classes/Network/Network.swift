@@ -20,10 +20,12 @@ public func network<RequestParams,Result>(
         let isActivity = ActivityIndicator()
         let error = ErrorTracker()
         
-        let result = start.flatMapLatest(request)
-            .trackActivity(isActivity)
-            .trackError(error)
-            .catchErrorJustComplete()
+        let result = start.flatMapLatest({ params in
+            request(params)
+                .trackActivity(isActivity)
+                .trackError(error)
+                .catchErrorJustComplete()
+        })
             .shareOnce()
         
         return (
@@ -44,10 +46,12 @@ public func network<Start: ObservableType,RequestParams,Result>(
         let error = ErrorTracker()
         
         let result = start.withLatestFrom(params)
-            .flatMapLatest(request)
-            .trackActivity(isActivity)
-            .trackError(error)
-            .catchErrorJustComplete()
+            .flatMapLatest({ params in
+                request(params)
+                    .trackActivity(isActivity)
+                    .trackError(error)
+                    .catchErrorJustComplete()
+            })
             .shareOnce()
         
         return (

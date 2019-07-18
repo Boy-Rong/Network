@@ -86,6 +86,9 @@ private func handleServiceCode(_ code: Int) {
     case 401:
         NotificationCenter.default.post(name: .networkService_401, object: nil)
         
+    case 402 ..< 500:
+        NotificationCenter.default.post(name: .networkService_4XX, object: nil, userInfo: ["code" : code])
+        
     default: break
     }
 }

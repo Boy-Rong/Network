@@ -10,29 +10,6 @@ import Alamofire
 @_exported import Moya
 @_exported import RxSwift
 
-// MARK: - 类型定义
-/// Moya
-//public typealias TargetType = Moya.TargetType
-//public typealias Response = Moya.Response
-//public typealias Task = Moya.Task
-//public typealias HttpMethod = Moya.Method
-//public typealias MoyaProvider = Moya.MoyaProvider
-//public typealias MultipartFormData = Moya.MultipartFormData
-//public typealias PluginType = Moya.PluginType
-//
-//public typealias ParameterEncoding = Alamofire.ParameterEncoding
-//public typealias JSONEncoding = Alamofire.JSONEncoding
-//public typealias URLEncoding = Alamofire.URLEncoding
-//public typealias PropertyListEncoding = Alamofire.PropertyListEncoding
-
-/// 网路结果类型
-//public typealias NetworkResult<T> = Swift.Result<T,NetworkError>
-///// 网路结果序列
-//public typealias NetworkObservable<T> = Observable<NetworkResult<T>>
-
-//public typealias NetworkVoid = Swift.Result<Void,NetworkError>
-//public typealias NetworkVoidObservable = Observable<NetworkVoid>
-
 
 public typealias ReachabilityStatus = Alamofire.NetworkReachabilityManager.NetworkReachabilityStatus
 
@@ -61,6 +38,9 @@ public extension Notification.Name {
     /// 服务器401通知
     static let networkService_401 = Notification.Name("network_service_401")
     
+    /// 服务器402 - 499通知，接收时解析code的字段为："code"
+    static let networkService_4XX = Notification.Name("network_service_4XX")
+    
     /// 网路可达性改变通知
     static let reachabilityChanged = Notification.Name("reachabilityChanged")
     
@@ -68,9 +48,11 @@ public extension Notification.Name {
 
 
 /// 分页返回结果类型
-public protocol PageList : Codable & Equatable {
-    associatedtype E : Codable & Equatable
+public protocol PageList {
+    associatedtype E
+    /// 数据
     var items : [E] { get }
+    /// 总数
     var total : Int { get }
 }
 

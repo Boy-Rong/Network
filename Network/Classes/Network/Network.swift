@@ -70,13 +70,11 @@ public func network<Start: ObservableType,RequestParams,Result>(
 ///   - requestNextPage: 第二页请求不需要带参数
 ///   - requestFromParams: 请求方法
 ///   - valuesFromResult: 将结结果转换成需要的值，在异步中执行
-///   - totalFormResult: 获取数据总量
-public func page<RequestParams, Next: ObservableType,  Result: Equatable, Value>(
+public func page<RequestParams, Next: ObservableType,  Result: PageList & Equatable, Value>(
     requestFirstPageWith requestFirstPage: Observable<RequestParams>,
     requestNextPageWhen requestNextPage: Next,
     requestFromParams: @escaping (RequestParams,Int) -> Observable<Result>,
-    valuesFromResult: @escaping (Result) -> ([Value]),
-    totalFormResult: @escaping (Result) -> (Int))
+    valuesFromResult: @escaping (Result) -> ([Value]))
     ->
     (values: Observable<[Value]>,
     total: Observable<Int>,
@@ -112,8 +110,8 @@ public func page<RequestParams, Next: ObservableType,  Result: Equatable, Value>
                 .flatMapLatest({ page -> Observable<[Value]> in
                     return requestFromParams(params, page)
                         .distinctUntilChanged()
+                        .do(onNext: { total.onNext($0.total) })
                         .observeOn(transformScheduler)
-                        .do(onNext: { total.onNext(totalFormResult($0)) })
                         .map(valuesFromResult)
                         .doNext { requestSuccess.onNext(()) }
                         .trackActivity(isActivity)

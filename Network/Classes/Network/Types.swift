@@ -56,24 +56,6 @@ public protocol PageList {
     var total : Int { get }
 }
 
-/// 分页加载状态
-public enum PageLoadState : String {
-    /// 下拉刷新中
-    case refreshing
-    /// 上拉加载中
-    case loadMoreing
-    /// 静止状态
-    case none
-    
-    public var isLoading : Bool {
-        switch self {
-        case .refreshing, .loadMoreing:
-            return true
-        case .none:
-            return false
-        }
-    }
-}
 
 /// 通用网络错误
 public enum NetworkError : Error {

@@ -61,7 +61,13 @@ public func network<Start: ObservableType,RequestParams,Result>(
         )
 }
 
-public func page<RequestParams, Next: ObservableType,  List: PageList & Equatable>(
+/// 分页请求通用处理
+///
+/// - Parameters:
+///   - requestFirstPage: 第一页请求，需要带参数
+///   - requestNextPage: 第二页请求不需要带参数
+///   - requestFromParams: 请求方法
+public func page<RequestParams, Next: ObservableType,  List: PageList>(
     requestFirstPageWith requestFirstPage: Observable<RequestParams>,
     requestNextPageWhen requestNextPage: Next,
     requestFromParams: @escaping (RequestParams,Int) -> Observable<List>)
@@ -127,21 +133,12 @@ public func page<RequestParams, Next: ObservableType,  List: PageList & Equatabl
     ->
     (values: Observable<[Value]>,
     total: Observable<Int>,
-    loadState: Observable<PageLoadState>,
+    isLoading: Observable<Bool>,
     error: Observable<NetworkError>) {
         let isActivity = ActivityIndicator()
         let error = ErrorTracker()
         let requestSuccess = BehaviorSubject<Void>(value: ())
         let total = BehaviorSubject<Int>(value: 0)
-        
-        let isRefresh = Observable.merge(
-            requestFirstPage.mapValue(true),
-            requestNextPage.mapValue(false)
-        )
-        
-        let loadState = isActivity.asObservable()
-            .withLatestFromAndSelf(isRefresh)
-            .map(loadState(form:and:))
         
         /// 当前分页
         let requestPage = requestFirstPage.mapVoid().startWithEmpty()
@@ -176,17 +173,9 @@ public func page<RequestParams, Next: ObservableType,  List: PageList & Equatabl
         return (
             values,
             total.asObservable(),
-            loadState,
+            isActivity.asObservable(),
             error.asObservable().map({ $0 as? NetworkError }).filterNil()
         )
-}
-
-private func loadState(form isActivity: Bool, and isRefresh: Bool) -> PageLoadState {
-    switch (isActivity, isRefresh) {
-    case (true,true): return .refreshing
-    case (true,false): return .loadMoreing
-    case (false,_): return .none
-    }
 }
 
 /// 并发调度队列

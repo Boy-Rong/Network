@@ -49,9 +49,9 @@ public extension Notification.Name {
 
 /// 分页返回结果类型
 public protocol PageList {
-    associatedtype E
+    associatedtype Value: Equatable
     /// 数据
-    var items : [E] { get }
+    var items : [Value] { get }
     /// 总数
     var total : Int { get }
 }

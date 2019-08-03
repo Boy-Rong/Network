@@ -16,7 +16,7 @@ public protocol CacheType where Self : TargetType {
     /// 成功请求后缓存数据，根据cachedKey去缓存
     func cache(response : Response)
     /// 异步获取缓存，根据cachedKey去取
-    func getResponse(_ complete: (Swift.Result<Response,Error>) -> Void)
+    func getResponse(_ complete: @escaping (Swift.Result<Response,Error>) -> Void)
     /// 请求失败后的回调
     func cacheRequest()
 }

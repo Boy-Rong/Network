@@ -73,6 +73,8 @@ public enum NetworkCacheType : Int {
     case cacheResponse
     /// 缓存失败任务
     case cacheRequest
+    /// 不缓存
+    case none
     
     /// 缓存错误请求的Key
     static var cacheRequestKey : String {

@@ -10,6 +10,34 @@ import Foundation
 import RxSwift
 import RxSwiftExtensions
 
+/// 通用网络请求方法
+///
+/// - Parameters:
+///   - start: 开始触发请求，需带参数
+///   - request: 请求方法
+public func request<RequestParams,Result>(
+    start: Observable<RequestParams>,
+    from request: @escaping (RequestParams) -> Observable<Result>)
+    -> (result: Observable<Result>,
+    isLoading: Observable<Bool>,
+    error: Observable<NetworkError>) {
+        let isActivity = ActivityIndicator()
+        let error = ErrorTracker()
+        
+        let result = start.flatMapLatest({ params in
+            request(params)
+                .trackActivity(isActivity)
+                .trackError(error)
+                .catchErrorJustComplete()
+        })
+            .shareOnce()
+        
+        return (
+            result,
+            isActivity.asObservable(),
+            error.asObservable().map({ $0 as? NetworkError }).filterNil()
+        )
+}
 
 public func network<RequestParams,Result>(
     start: Observable<RequestParams>,
@@ -158,7 +186,7 @@ public func page<RequestParams, Next: ObservableType,  List: PageList & Equatabl
                         .do(onNext: { total.onNext($0.total) })
                         .map({ $0.items })
                         .distinctUntilChanged()
-                        .observeOn(transformScheduler)
+                        .observeOn(transformScheduler)  // 切换到子线程
                         .mapMany(transformListValue)
                         .doNext { requestSuccess.onNext(()) }
                         .trackActivity(isActivity)

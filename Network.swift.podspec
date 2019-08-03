@@ -8,11 +8,11 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Network.swift'
-  s.version          = '0.8.0'
+  s.version          = '0.8.1'
   s.summary          = 'Moya+RxSwift 扩展'
 
   s.description      = <<-DESC
-对Moya扩展, 可选缓存，RxSwift支持
+封装Moya, 可选缓存，RxSwift支持
                        DESC
 
   s.homepage         = 'https://github.com/495929699/Network'

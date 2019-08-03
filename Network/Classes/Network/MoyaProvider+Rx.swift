@@ -122,10 +122,15 @@ extension Reactive where Base: MoyaProviderType {
         }
         
         return Observable<Response>.create { observer in
-            if let response = try? token.getResponse() {
-                observer.onNext(response)
-            }
-            observer.onCompleted()
+            token.getResponse({ result in
+                switch result {
+                case .success(let response):
+                    observer.onNext(response)
+                    
+                case .failure: break
+                }
+                observer.onCompleted()
+            })
             
             return Disposables.create()
         }

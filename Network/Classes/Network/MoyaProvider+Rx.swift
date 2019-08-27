@@ -12,6 +12,9 @@ import Moya
 
 extension MoyaProvider: ReactiveCompatible {}
 
+/// JSON解析器
+private let decoder = JSONDecoder()
+
 // MARK: - 自己封装
 public extension Reactive where Base: MoyaProviderType {
     
@@ -38,13 +41,18 @@ public extension Reactive where Base: MoyaProviderType {
         ) -> Observable<Void> {
         
         return request(token).flatMap({ response -> Observable<Void> in
-            guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
-                let error = "服务器code解析错误\n\(String(data: response.data, encoding: .utf8) ?? "")"
+
+            guard let jsonDictionary = (try? response.mapJSON()) as? NSDictionary else {
+                let error = "无效的json格式"
+                return .error(NetworkError.error(value: error))
+            }
+            guard let code = jsonDictionary.value(forKeyPath: codeKey) as? Int else {
+                let error = "服务器code解析错误\n\(responseDescribe(response) ?? "")"
                 return .error(NetworkError.error(value: error))
             }
             guard code == successCode else {
                 handleServiceCode(code)
-                let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? "code不等于\(successCode)"
+                let message = (jsonDictionary.value(forKeyPath: messageKey) as? String) ?? "code不等于\(successCode)"
                 return .error(NetworkError.service(code: code, message: message))
             }
             
@@ -61,18 +69,31 @@ public extension Reactive where Base: MoyaProviderType {
         ) -> Observable<T> where T : Codable {
 
         return request(token).flatMap({ response -> Observable<T> in
-            guard let code = try? response.map(Int.self, atKeyPath: codeKey) else {
-                let error = "服务器code解析错误\n\(String(data: response.data, encoding: .utf8) ?? "")"
+            
+            guard let jsonDictionary = (try? response.mapJSON()) as? NSDictionary else {
+                let error = "无效的json格式"
+                return .error(NetworkError.error(value: error))
+            }
+            guard let code = jsonDictionary.value(forKeyPath: codeKey) as? Int else {
+                let error = "服务器code解析错误\n\(responseDescribe(response) ?? "")"
                 return .error(NetworkError.error(value: error))
             }
             guard code == successCode else {
                 handleServiceCode(code)
-                let message = (try? response.map(String.self, atKeyPath: messageKey)) ?? "code不等于\(successCode)"
+                let message = (jsonDictionary.value(forKeyPath: messageKey) as? String) ?? "code不等于\(successCode)"
                 return .error(NetworkError.service(code: code, message: message))
             }
+            guard
+                let jsonObject = jsonDictionary.value(forKeyPath: dataKey),
+                JSONSerialization.isValidJSONObject(jsonObject),
+                let jsonData = try? JSONSerialization.data(withJSONObject: jsonObject),
+                jsonData.count > 1 else {
+                return .error(NetworkError.emptyData)
+            }
+            
             do {
-                let data = try response.map(T.self, atKeyPath: dataKey)
-                return .just(data)
+                let object = try decoder.decode(T.self, from: jsonData)
+                return .just(object)
             } catch let error {
                 return .error(NetworkError.error(value: "请求成功，但data解析错误\nerror: \(error)"))
             }
@@ -91,6 +112,15 @@ private func handleServiceCode(_ code: Int) {
         
     default: break
     }
+}
+
+/// 描述响应，正式环境不打印
+private func responseDescribe(_ response: Response) -> String? {
+    #if DEBUG
+    return String(data: response.data, encoding: .utf8) ?? "无response.data"
+    #else
+    return nil
+    #endif
 }
 
 extension Reactive where Base: MoyaProviderType {

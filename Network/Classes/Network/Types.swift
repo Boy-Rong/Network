@@ -65,6 +65,8 @@ public enum NetworkError : Error {
     case service(code : Int, message : String)
     /// 返回字段不是code,msg,data 格式
     case error(value : String)
+    /// 空数据错误（codew == success,但是data字段无效或者为null）
+    case emptyData
 }
 
 /// 缓存类型

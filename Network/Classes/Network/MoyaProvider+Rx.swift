@@ -83,22 +83,36 @@ public extension Reactive where Base: MoyaProviderType {
                 let message = (jsonDictionary.value(forKeyPath: messageKey) as? String) ?? "code不等于\(successCode)"
                 return .error(NetworkError.service(code: code, message: message))
             }
-            guard
-                let jsonObject = jsonDictionary.value(forKeyPath: dataKey),
-                JSONSerialization.isValidJSONObject(jsonObject),
-                let jsonData = try? JSONSerialization.data(withJSONObject: jsonObject),
-                jsonData.count > 1 else {
-                return .error(NetworkError.emptyData)
-            }
             
             do {
-                let object = try decoder.decode(T.self, from: jsonData)
+                let object = try decoderJSON(T.self, json: jsonDictionary, forKeyPath: dataKey)
                 return .just(object)
             } catch let error {
-                return .error(NetworkError.error(value: "请求成功，但data解析错误\nerror: \(error)"))
+                return .error(error)
             }
         })
     }
+}
+
+
+/// 解析JSON
+private func decoderJSON<T: Decodable>(_ type: T.Type, json: NSDictionary, forKeyPath keyPath: String) throws -> T {
+    guard let jsonObject = json.value(forKeyPath: keyPath) else {
+        throw NetworkError.emptyData
+    }
+    guard JSONSerialization.isValidJSONObject(jsonObject) else {
+        if let object = jsonObject as? T {
+            return object
+        } else {
+            throw NetworkError.error(value: "\(keyPath)不是JSON格式。也不是\(T.self)类型")
+        }
+    }
+    guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonObject),
+        jsonData.count > 0 else {
+        throw NetworkError.emptyData
+    }
+    
+    return try decoder.decode(T.self, from: jsonData)
 }
 
 /// 处理服务器Code
@@ -129,19 +143,32 @@ extension Reactive where Base: MoyaProviderType {
         /// 先判断是否有网
         guard ReachabilityService.shared.isHasNetwork else { return .error(NetworkError.error(value: "没有网络可用")) }
         
+        /// 缓存请求成功的结果
+        let successHandle: (Response) -> Void = { response in
+            /// 成功请求后缓存数据
+            if let token = token as? CacheType, token.cache == .cacheResponse {
+                token.cache(response: response)
+            }
+        }
+        
+        /// 失败后缓存请求
+        let errorHandle = {
+            if let token = token as? CacheType, token.cache == .cacheRequest {
+                token.cacheRequest()
+            }
+        }
+        
         /// 开始网络请求
         return requestResponse(token)
             .do(onNext: { response in
-                /// 成功请求后缓存数据
-                if let token = token as? CacheType, token.cache == .cacheResponse {
-                    token.cache(response: response)
+                /// statusCode == 200 的才为成功，404等也返回的是Response，而不是错误
+                if response.statusCode == 200 {
+                    successHandle(response)
+                } else {
+                    errorHandle()
                 }
-            }, onError: { error in
-                /// 失败后缓存请求
-                if let token = token as? CacheType, token.cache == .cacheRequest {
-                    token.cacheRequest()
-                }
-            })
+                
+            }, onError: { _ in errorHandle() })
     }
     
     /// 请求缓存，若不是缓存或者没有缓存，直接返回完成事件

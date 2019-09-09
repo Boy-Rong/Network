@@ -104,7 +104,7 @@ private func decoderJSON<T: Decodable>(_ type: T.Type, json: NSDictionary, forKe
         if let object = jsonObject as? T {
             return object
         } else {
-            throw NetworkError.error(value: "\(keyPath)不是JSON格式。也不是\(T.self)类型")
+            throw NetworkError.emptyData
         }
     }
     guard let jsonData = try? JSONSerialization.data(withJSONObject: jsonObject),

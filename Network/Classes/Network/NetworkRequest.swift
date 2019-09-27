@@ -32,10 +32,18 @@ public func request<RequestParams,Result>(
         })
             .shareOnce()
         
+        let networkError = error.asObservable().map { error -> NetworkError in
+            if let error = error as? NetworkError {
+                return error
+            } else {
+                return .error(value: "解析错误")
+            }
+        }
+        
         return (
             result,
             isActivity.asObservable(),
-            error.asObservable().map({ $0 as? NetworkError }).filterNil()
+            networkError
         )
 }
 

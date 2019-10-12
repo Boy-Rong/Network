@@ -36,7 +36,7 @@ public func request<RequestParams,Result>(
             if let error = error as? NetworkError {
                 return error
             } else {
-                return .error(value: "解析错误")
+                return .error(value: error.localizedDescription)
             }
         }
         
@@ -68,7 +68,7 @@ public func network<RequestParams,Result>(
             if let error = error as? NetworkError {
                 return error
             } else {
-                return .error(value: "解析错误")
+                return .error(value: error.localizedDescription)
             }
         }
         
@@ -102,7 +102,7 @@ public func network<Start: ObservableType,RequestParams,Result>(
             if let error = error as? NetworkError {
                 return error
             } else {
-                return .error(value: "解析错误")
+                return .error(value: error.localizedDescription)
             }
         }
         

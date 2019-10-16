@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ResponsePlugin: PluginType {
+public struct ResponsePlugin: PluginType {
     /// Called to modify a result before completion.
     func process(_ result: Result<Moya.Response, MoyaError>, target: TargetType) -> Result<Moya.Response, MoyaError> {
         

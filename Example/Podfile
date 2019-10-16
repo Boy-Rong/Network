@@ -1,11 +1,8 @@
 use_frameworks!
-
 target 'RHNetwork_Example' do
   pod 'Network.swift', :path => '../'
 
   target 'RHNetwork_Tests' do
     inherit! :search_paths
-
-    
   end
 end

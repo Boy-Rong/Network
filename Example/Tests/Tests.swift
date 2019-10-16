@@ -1,5 +1,5 @@
 import XCTest
-import RHNetwork
+import Network
 
 class Tests: XCTestCase {
     

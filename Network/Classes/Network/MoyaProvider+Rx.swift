@@ -95,6 +95,72 @@ public extension Reactive where Base: MoyaProviderType {
 }
 
 
+// MARK: - 扩展 Provider request 方法
+public extension Reactive where Base: MoyaProviderType {
+    
+    /// 返回结果为字典，返回为data的属性 如果是字典则返回字典 如果不为字典则返回nil
+    func hashRequest(_ token : Base.Target,
+                    dataKey : String = NetworkConfigure.data,
+                    codeKey : String = NetworkConfigure.code,
+                    messageKey : String = NetworkConfigure.message,
+                    successCode : Int = NetworkConfigure.success
+        ) -> Observable<[String: Any]?> {
+
+        return request(token).flatMap({ response -> Observable<[String: Any]?> in
+            
+            guard let jsonDictionary = (try? response.mapJSON()) as? NSDictionary else {
+                let error = "无效的json格式"
+                return .error(NetworkError.error(value: error))
+            }
+            guard let code = jsonDictionary.value(forKeyPath: codeKey) as? Int else {
+                let error = "服务器code解析错误\n\(responseDescribe(response) ?? "")"
+                return .error(NetworkError.error(value: error))
+            }
+            guard code == successCode else {
+                handleServiceCode(code)
+                let message = (jsonDictionary.value(forKeyPath: messageKey) as? String) ?? "code不等于\(successCode)"
+                return .error(NetworkError.service(code: code, message: message))
+            }
+            
+            if let object = jsonDictionary.value(forKeyPath: dataKey) as? [String: Any] {
+                return .just(object)
+            }
+            return .just(nil)
+        })
+    }
+    
+    /// 返回结果为字符串，返回为dataKey的属性 可为空
+    func stringRequest(_ token : Base.Target,
+                    dataKey : String = NetworkConfigure.data,
+                    codeKey : String = NetworkConfigure.code,
+                    messageKey : String = NetworkConfigure.message,
+                    successCode : Int = NetworkConfigure.success
+        ) -> Observable<String?> {
+
+        return request(token).flatMap({ response -> Observable<String?> in
+            
+            guard let jsonDictionary = (try? response.mapJSON()) as? NSDictionary else {
+                let error = "无效的json格式"
+                return .error(NetworkError.error(value: error))
+            }
+            guard let code = jsonDictionary.value(forKeyPath: codeKey) as? Int else {
+                let error = "服务器code解析错误\n\(responseDescribe(response) ?? "")"
+                return .error(NetworkError.error(value: error))
+            }
+            guard code == successCode else {
+                handleServiceCode(code)
+                let message = (jsonDictionary.value(forKeyPath: messageKey) as? String) ?? "code不等于\(successCode)"
+                return .error(NetworkError.service(code: code, message: message))
+            }
+            
+            if let object = jsonDictionary.value(forKeyPath: dataKey) as? String {
+                return .just(object)
+            }
+            return .just(nil)
+        })
+    }
+}
+
 /// 解析JSON
 private func decoderJSON<T: Decodable>(_ type: T.Type, json: NSDictionary, forKeyPath keyPath: String) throws -> T {
     guard let jsonObject = json.value(forKeyPath: keyPath) else {

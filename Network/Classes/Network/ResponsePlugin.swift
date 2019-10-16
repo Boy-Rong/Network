@@ -8,6 +8,8 @@
 import Foundation
 
 public struct ResponsePlugin: PluginType {
+    
+    public init() {}
     /// Called to modify a result before completion.
     func process(_ result: Result<Moya.Response, MoyaError>, target: TargetType) -> Result<Moya.Response, MoyaError> {
         

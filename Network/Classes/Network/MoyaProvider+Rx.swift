@@ -33,6 +33,18 @@ public extension Reactive where Base: MoyaProviderType {
         }
     }
     
+    /// 带 NetworkConfigure 的 请求  返回<Response>
+    func responseRequest(_ token : Base.Target,
+                    dataKey : String = NetworkConfigure.data,
+                    codeKey : String = NetworkConfigure.code,
+                    messageKey : String = NetworkConfigure.message,
+                    successCode : Int = NetworkConfigure.success
+        ) -> Observable<Response> {
+        return request(token).flatMap({ response -> Observable<Response> in
+            return .just(response)
+        })
+    }
+    
     /// 请求成功
     func request(_ token : Base.Target,
                  codeKey : String = NetworkConfigure.code,

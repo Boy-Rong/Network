@@ -41,3 +41,23 @@ public extension TargetType {
     var sampleData: Data { return Data() }
 }
 
+
+
+extension Error {
+    func mapError() -> NetworkError {
+        if let error = self as? NetworkError {
+            return error
+        }
+        if let moyaError = self as? MoyaError {
+            switch moyaError {
+            case .requestMapping(let message):
+                return .error(value: message)
+            case .encodableMapping(let error):
+                return .network(value: error)
+            default:
+                break
+            }
+        }
+        return .error(value: self.localizedDescription)
+    }
+}

@@ -33,11 +33,7 @@ public func request<RequestParams,Result>(
             .shareOnce()
         
         let networkError = error.asObservable().map { error -> NetworkError in
-            if let error = error as? NetworkError {
-                return error
-            } else {
-                return .error(value: error.localizedDescription)
-            }
+            return error.mapError()
         }
         
         return (
@@ -65,11 +61,7 @@ public func network<RequestParams,Result>(
             .shareOnce()
         
         let networkError = error.asObservable().map { error -> NetworkError in
-            if let error = error as? NetworkError {
-                return error
-            } else {
-                return .error(value: error.localizedDescription)
-            }
+            return error.mapError()
         }
         
         return (
@@ -99,11 +91,7 @@ public func network<Start: ObservableType,RequestParams,Result>(
             .shareOnce()
         
         let networkError = error.asObservable().map { error -> NetworkError in
-            if let error = error as? NetworkError {
-                return error
-            } else {
-                return .error(value: error.localizedDescription)
-            }
+            return error.mapError()
         }
         
         return (

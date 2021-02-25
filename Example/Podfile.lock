@@ -1,16 +1,16 @@
 PODS:
-  - Alamofire (4.9.0)
+  - Alamofire (4.9.1)
   - Moya (13.0.1):
     - Moya/Core (= 13.0.1)
   - Moya/Core (13.0.1):
     - Alamofire (~> 4.1)
     - Result (~> 4.1)
-  - Network.swift (0.8.5):
+  - Network.swift (0.8.7):
     - Moya (~> 13.0)
-    - RxSwift (~> 5.0)
+    - RxSwift
     - RxSwiftExtensions.swift (~> 0.2)
   - Result (4.1.0)
-  - RxSwift (5.0.0)
+  - RxSwift (5.1.1)
   - RxSwiftExtensions.swift (0.2.5):
     - RxSwift (~> 5.0)
 
@@ -18,7 +18,7 @@ DEPENDENCIES:
   - Network.swift (from `../`)
 
 SPEC REPOS:
-  https://github.com/cocoapods/specs.git:
+  trunk:
     - Alamofire
     - Moya
     - Result
@@ -30,13 +30,13 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  Alamofire: afc3e7c6db61476cb45cdd23fed06bad03bbc321
+  Alamofire: 85e8a02c69d6020a0d734f6054870d7ecb75cf18
   Moya: f4a4b80ff2f8a4ffc208dfb31cd91636622fee6e
-  Network.swift: 7ffbab5d4fb4c833f2b0a02700a447abb90115a5
+  Network.swift: 39f867d898b4e5b6bc9c3c93c668b15832561b5d
   Result: bd966fac789cc6c1563440b348ab2598cc24d5c7
-  RxSwift: 8b0671caa829a763bbce7271095859121cbd895f
+  RxSwift: 81470a2074fa8780320ea5fe4102807cb7118178
   RxSwiftExtensions.swift: 2e288839301728e5de4de06bf143359ed75198c3
 
 PODFILE CHECKSUM: 6ab97ae7f336ec2ae0d893569e6b4fdd4ecad3fc
 
-COCOAPODS: 1.6.2
+COCOAPODS: 1.10.1

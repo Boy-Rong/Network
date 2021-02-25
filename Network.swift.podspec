@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Network.swift'
-  s.version          = '0.8.5'
+  s.version          = '0.8.6'
   s.summary          = 'Moya+RxSwift 扩展'
 
   s.description      = <<-DESC

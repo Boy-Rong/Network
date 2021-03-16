@@ -30,8 +30,8 @@ Pod::Spec.new do |s|
 
   s.source_files = 'Network/Classes/**/*.swift'
 
-  s.dependency 'Moya', '~>13.0'
-  s.dependency 'RxSwift', '~>5.0'
-  s.dependency 'RxSwiftExtensions.swift', '~>0.2'
+  s.dependency 'Moya', '~> 13.0'
+  s.dependency 'RxSwift'
+  s.dependency 'RxSwiftExtensions.swift', '~> 0.2'
   
 end

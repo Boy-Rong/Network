@@ -32,10 +32,14 @@ public func request<RequestParams,Result>(
         })
             .shareOnce()
         
+        let networkError = error.asObservable().map { error -> NetworkError in
+            return error.mapError()
+        }
+        
         return (
             result,
             isActivity.asObservable(),
-            error.asObservable().map({ $0 as? NetworkError }).filterNil()
+            networkError
         )
 }
 
@@ -56,10 +60,14 @@ public func network<RequestParams,Result>(
         })
             .shareOnce()
         
+        let networkError = error.asObservable().map { error -> NetworkError in
+            return error.mapError()
+        }
+        
         return (
             result,
             isActivity.asObservable(),
-            error.asObservable().map({ $0 as? NetworkError }).filterNil()
+            networkError
         )
 }
 
@@ -82,10 +90,14 @@ public func network<Start: ObservableType,RequestParams,Result>(
             })
             .shareOnce()
         
+        let networkError = error.asObservable().map { error -> NetworkError in
+            return error.mapError()
+        }
+        
         return (
             result,
             isActivity.asObservable(),
-            error.asObservable().map({ $0 as? NetworkError }).filterNil()
+            networkError
         )
 }
 
